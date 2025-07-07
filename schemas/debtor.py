@@ -10,9 +10,12 @@ class DebtorBase(BaseModel):
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
 
-class DebtorCreate(DebtorBase):
-    pass
-
+class DebtorCreate(BaseModel):
+    phone: Optional[str]
+    state: Optional[str] = "GRIS"
+    debtor_dataset_id: int
+    custom_data: dict = {}
+    
 class DebtorUpdate(DebtorBase):
     pass
 
@@ -21,11 +24,12 @@ class DebtorIDs(BaseModel):
 
 
 
-class DebtorRead(DebtorBase):
+class DebtorRead(BaseModel):
     id: int
-    amount: Optional[float] = None
-    status: Optional[str] = None
-    # campaigns: List["CampaignReadMinimal"]
+    phone: Optional[str]
+    state: Optional[str]
+    debtor_dataset_id: int
+    custom_data: dict
 
     class Config:
-        from_attributes = True
+        orm_mode = True
