@@ -1,5 +1,6 @@
 import pytest
 from httpx import AsyncClient
+from httpx import ASGITransport
 import sys
 def _load_app(monkeypatch):
     monkeypatch.setenv("SECRET_KEY", "test_secret_key")
@@ -14,7 +15,8 @@ def _load_app(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_analyze_strategies_and_status():
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         strategies = [{"id": 1, "name": "Estrategia 1"}, {"id": 2, "name": "Estrategia 2"}]
         resp = await ac.post("/strategies/analyze", json=strategies)
         assert resp.status_code == 200

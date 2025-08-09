@@ -1,5 +1,6 @@
 import pytest
 from httpx import AsyncClient
+from httpx import ASGITransport
 import sys
 def _load_app(monkeypatch):
     monkeypatch.setenv("SECRET_KEY", "test_secret_key")
@@ -15,7 +16,8 @@ def _load_app(monkeypatch):
 @pytest.mark.asyncio
 async def test_send_whatsapp_and_status(monkeypatch):
     app = _load_app(monkeypatch)
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         # Enviar mensaje WhatsApp
         payload = {"to": "+5491112345678", "message": "Hola!"}
         resp = await ac.post("/whatsapp/send", json=payload)

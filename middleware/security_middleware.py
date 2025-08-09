@@ -111,8 +111,13 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
         if request.method in ["POST", "PUT", "PATCH"]:
             content_type = request.headers.get("Content-Type", "")
-            # Permitir application/json o multipart/form-data
-            if not content_type or (("application/json" not in content_type) and ("multipart/form-data" not in content_type)):
+            # Permitir application/json, multipart/form-data y x-www-form-urlencoded (Twilio)
+            allowed = (
+                "application/json" in content_type
+                or "multipart/form-data" in content_type
+                or "application/x-www-form-urlencoded" in content_type
+            )
+            if not content_type or not allowed:
                 print(f"[SECURITY] Content-Type inválido: '{content_type}'")
                 return False
 
