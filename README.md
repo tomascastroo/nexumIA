@@ -108,7 +108,7 @@ REDIS_URL=redis://localhost:6379/0
 ### **Endpoints de Monitoreo**
 - `GET /health` - Health check
 - `GET /metrics` - Métricas Prometheus (expuesto por `core/metrics.py`)
-- `GET /docs` - Documentación API
+- `GET /docs` - Documentación API (OpenAPI)
 
 ### **Logging Estructurado**
 ```bash
