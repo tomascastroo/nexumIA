@@ -2,7 +2,7 @@ from .celery_app import celery_app
 import structlog
 from prometheus_client import Counter
 from db.db import SessionLocal
-from services.conversation_service import handle_incoming_message
+from services.conversation_service import continue_conversation
 from services.whatsapp_service import send_whatsapp_message
 import asyncio
 
@@ -31,8 +31,9 @@ def process_incoming_message(phone: str, body: str):
     ia_task_counter.inc()
     db = SessionLocal()
     try:
-        # Ejecutar la coroutine en un event loop propio del worker
-        response_text = asyncio.run(handle_incoming_message(phone, body, db))
+        # Usar API unificada para continuar conversación
+        update = continue_conversation(phone, body)
+        response_text = update.get("response") if isinstance(update, dict) else None
         if not response_text:
             response_text = "Gracias, recibimos tu mensaje. Te responderemos pronto."
         send_whatsapp_message(f"whatsapp:{phone}", response_text)
