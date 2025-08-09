@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from pydantic import BaseModel, ConfigDict
 from fastapi_limiter.depends import RateLimiter
 from dependencies.auth import get_current_user, require_roles
+from core.logger import log_security_event
 
 router = APIRouter()
 
@@ -28,18 +29,21 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+    log_security_event("user_registered", user_id=db_user.id)
     return UserOut.model_validate(db_user, from_attributes=True)
 
 @router.post("/login", response_model=LoginResponse, dependencies=[Depends(RateLimiter(times=5, seconds=60))])
 def login(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if not db_user or not verify_password(user.password, str(db_user.hashed_password)):
+        log_security_event("login_failed", user_id=None, details={"email": user.email})
         raise HTTPException(status_code=400, detail="Invalid credentials")
     
     expires_delta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token({"sub": str(db_user.id)}, expires_delta=expires_delta)
     expires_at = int((datetime.utcnow() + expires_delta).timestamp())
     
+    log_security_event("login_success", user_id=db_user.id)
     return {
         "access_token": access_token,
         "token_type": "bearer",

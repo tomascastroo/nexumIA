@@ -4,6 +4,7 @@ from prometheus_client import Counter
 from db.db import SessionLocal
 from services.conversation_service import handle_incoming_message
 from services.whatsapp_service import send_whatsapp_message
+import asyncio
 
 logger = structlog.get_logger()
 ia_task_counter = Counter('ia_tasks_executed', 'Total IA tasks executed')
@@ -30,10 +31,8 @@ def process_incoming_message(phone: str, body: str):
     ia_task_counter.inc()
     db = SessionLocal()
     try:
-        response_text = handle_incoming_message(phone, body, db)
-        # handle_incoming_message es async; si devuelve coroutine, resolver
-        if hasattr(response_text, "__await__"):
-            response_text = response_text.send(None)  # no event loop in worker, best-effort
+        # Ejecutar la coroutine en un event loop propio del worker
+        response_text = asyncio.run(handle_incoming_message(phone, body, db))
         if not response_text:
             response_text = "Gracias, recibimos tu mensaje. Te responderemos pronto."
         send_whatsapp_message(f"whatsapp:{phone}", response_text)

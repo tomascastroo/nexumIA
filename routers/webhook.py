@@ -8,6 +8,7 @@ import json
 from services.conversation_service import handle_incoming_message as handle_conversation
 from tasks.ia_tasks import process_incoming_message
 from typing import List, Dict, Any, cast
+from core.logger import log_business_event
 
 router = APIRouter()
 
@@ -49,6 +50,7 @@ async def whatsapp_webhook(request: Request):
 
     # Encolar el procesamiento para backpressure
     process_incoming_message.delay(cleaned_number, incoming_msg)
+    log_business_event("webhook_enqueued", details={"phone": cleaned_number})
     
     # Responder rápido a Twilio para evitar timeouts
     twilio_response = MessagingResponse()
