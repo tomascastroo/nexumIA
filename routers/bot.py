@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from dependencies.auth import get_current_user
 from models.User import User
 import schemas
-from services import bot_interaction_service, bot_service
+from services import bot_service
 from db.db import SessionLocal
 from schemas.bot import BotCreate, BotUpdate, BotRead
 
@@ -36,12 +36,13 @@ def get_bot(bot_id:int,db:Session=Depends(get_db),current_user: User = Depends(g
     db_bot= bot_service.get_bot(db,bot_id,user_id=current_user.id)
     if db_bot is None:
         raise HTTPException(status_code=404, detail="Bot not found")
-    return db_bot
+    return BotRead.model_validate(db_bot, from_attributes=True)
 
 
 @router.get("/", response_model=List[BotRead])
 def get_bots(skip: int = 0, limit: int = 100, db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
-    return bot_service.get_bots(db,user_id=current_user.id, skip=skip, limit=limit)
+    result = bot_service.get_bots(db,user_id=current_user.id, skip=skip, limit=limit)
+    return [BotRead.model_validate(b, from_attributes=True) for b in result]
 
 @router.delete("/{bot_id}",response_model=BotRead)
 def delete_bot(bot_id:int,db:Session=Depends(get_db),current_user: User = Depends(get_current_user)):
