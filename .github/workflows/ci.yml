@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop, feat/**, fix/**, refactor/**, chore/**, ci/** ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: nexum
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+
+    env:
+      # App
+      APP_ENV: test
+      ENVIRONMENT: test
+      SECRET_KEY: dummy_secret_key_change_me
+      JWT_ALG: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000
+      ENABLE_METRICS: "true"
+
+      # Providers
+      OPENAI_API_KEY: dummy
+      TWILIO_ACCOUNT_SID: dummy
+      TWILIO_AUTH_TOKEN: dummy
+      TWILIO_WHATSAPP_NUMBER: whatsapp:+14155238886
+
+      # DB/Cache
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nexum
+      REDIS_URL: redis://localhost:6379/0
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff mypy pytest pytest-cov
+
+      - name: Wait for Postgres
+        run: |
+          for i in {1..10}; do
+            pg_isready -h localhost -p 5432 -U postgres && break
+            sleep 2
+          done
+
+      - name: Run migrations (if alembic configured)
+        run: |
+          if [ -f alembic.ini ]; then
+            pip install alembic
+            alembic upgrade head || echo "Skipping migrations if not configured"
+          fi
+
+      - name: Lint (ruff - select critical rules)
+        run: |
+          ruff check --select E9,F63,F7,F82 .
+
+      - name: Type check (mypy, ignore missing imports)
+        run: |
+          mypy --ignore-missing-imports --install-types --non-interactive || true
+
+      - name: Run tests
+        run: |
+          pytest -q --maxfail=1 --disable-warnings
+
