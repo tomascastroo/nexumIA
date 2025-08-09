@@ -4,6 +4,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from fastapi import FastAPI, Request
 from fastapi.responses import Response
 from routers import campaign,strategy,bot,test_whatsapp,webhook,traceability
+from routers import message
 from middleware.security_middleware import setup_cors_middleware, setup_security_middleware
 from apscheduler.schedulers.background import BackgroundScheduler
 from services.followup_service import run_daily_followups
@@ -106,5 +107,6 @@ app.include_router(debt_payment_router, prefix="/api/v1/debt-payment")
 app.include_router(test_whatsapp.router, prefix="/whatsapp")
 app.include_router(webhook.router, prefix="/webhook")
 app.include_router(metrics_router)
+app.include_router(message.router)
 
 print("CORS origins permitidos:", os.getenv("ALLOWED_ORIGINS"))
