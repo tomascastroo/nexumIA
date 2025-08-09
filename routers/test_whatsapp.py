@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response
 from pytest import Session
 from twilio.twiml.messaging_response import MessagingResponse
+import sys
+sys.path.append('.')
 from db.db import SessionLocal
 from routers.bot import get_db
 from services.whatsapp_service import send_whatsapp_message
