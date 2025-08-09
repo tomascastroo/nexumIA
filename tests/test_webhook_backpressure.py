@@ -10,6 +10,7 @@ def test_webhook_responds_quickly(monkeypatch):
     sys.modules.pop("db.db", None)
     sys.modules.pop("main", None)
     from db.db import Base, engine
+    import models.Debtor  # ensure table registered
     Base.metadata.create_all(bind=engine)
     import main as mainmod
     client = TestClient(mainmod.app)

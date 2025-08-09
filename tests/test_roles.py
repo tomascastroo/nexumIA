@@ -9,9 +9,9 @@ def test_admin_guard(monkeypatch):
     sys.modules.pop("db.db", None)
     sys.modules.pop("main", None)
     from db.db import Base, engine
-    Base.metadata.create_all(bind=engine)
     # ensure tables exist for users via models import
     import models.User  # noqa: F401
+    Base.metadata.create_all(bind=engine)
     import main as mainmod
     client = TestClient(mainmod.app)
 
