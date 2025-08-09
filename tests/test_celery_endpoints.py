@@ -13,7 +13,8 @@ def _load_app(monkeypatch):
     return mainmod.app
 
 @pytest.mark.asyncio
-async def test_send_whatsapp_and_status():
+async def test_send_whatsapp_and_status(monkeypatch):
+    app = _load_app(monkeypatch)
     async with AsyncClient(app=app, base_url="http://test") as ac:
         # Enviar mensaje WhatsApp
         payload = {"to": "+5491112345678", "message": "Hola!"}

@@ -14,6 +14,7 @@ def test_start_and_continue_conversation(monkeypatch):
     sys.modules.pop("main", None)
     from db.db import Base, engine, SessionLocal
     Base.metadata.create_all(bind=engine)
+    import models.Debtor  # ensure table
 
     # Crear un debtor dummy
     from models.Debtor import Debtor

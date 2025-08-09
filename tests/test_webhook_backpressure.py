@@ -28,7 +28,8 @@ def test_webhook_responds_quickly(monkeypatch):
         "From": "whatsapp:+5491100000000",
         "Body": "hola"
     }
-    r = client.post("/webhook/", data=data)
+    # Twilio sends form-encoded; allow our security middleware by specifying content-type
+    r = client.post("/webhook/", data=data, headers={"Content-Type": "application/x-www-form-urlencoded"})
     assert r.status_code == 200
     # Twilio XML minimal response
     assert "Gracias, procesaremos tu mensaje." in r.text

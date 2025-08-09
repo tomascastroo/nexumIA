@@ -15,6 +15,7 @@ def test_register_and_login_and_protected_route(monkeypatch):
     import db.db as dbmod
     from db.db import Base, engine
     Base.metadata.create_all(bind=engine)
+    import models.User  # ensure users table
     import main as mainmod
     client = TestClient(mainmod.app)
 

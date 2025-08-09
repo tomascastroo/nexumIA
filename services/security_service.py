@@ -320,9 +320,10 @@ class SecurityService:
     def generate_api_token(self, user_id: int, expires_in_hours: int = 24) -> str:
         """Genera token de API temporal"""
         try:
+            exp_ts = int((datetime.utcnow() + timedelta(hours=expires_in_hours)).timestamp())
             payload = {
                 'user_id': user_id,
-                'exp': datetime.utcnow() + timedelta(hours=expires_in_hours),
+                'exp': exp_ts,
                 'type': 'api_token'
             }
             
@@ -341,8 +342,8 @@ class SecurityService:
             payload = json.loads(token_data)
             
             # Verificar expiración
-            exp = datetime.fromisoformat(payload['exp'])
-            if datetime.utcnow() > exp:
+            exp_ts = int(payload['exp'])
+            if int(datetime.utcnow().timestamp()) > exp_ts:
                 return None
             
             return payload.get('user_id')
