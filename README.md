@@ -339,6 +339,19 @@ locust -f tests/perf_test_locust.py --host=http://localhost:8000
 
 Webhook Twilio encola `process_incoming_message(phone, body)` para no bloquear el request.
 
+## 💬 Conversación (API unificada)
+
+Centralizamos la lógica de conversación en `services/conversation_service.py`.
+
+- Inicio: `start_conversation(bot_id: int, debtor_id: int, context: dict | None) -> {conversation_id, history}`
+- Continuar: `continue_conversation(conversation_id: str, message: str) -> {conversation_id, response}`
+- Clasificar: `classify_state(text: str) -> VERDE|AMARILLO|ROJO|GRIS`
+
+Notas:
+- `conversation_id` puede ser el `debtor_id` (str) o el `phone` del deudor.
+- No se invoca OpenAI desde controladores; todo pasa por `services/openai_service` a través del servicio unificado.
+- Ver tests: `tests/test_conversation_service.py`.
+
 ## 📊 Monitoreo
 - Prometheus: `/metrics`
 - Flower: `flower -A tasks.celery_app --port=5555`
