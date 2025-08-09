@@ -3,3 +3,15 @@ node_modules_backup/
 *.log
 .DS_Store
 
+# Python
+__pycache__/
+*.pyc
+.cache/
+dist/
+build/
+.coverage
+htmlcov/
+.vscode/
+
+# Environment files
+.env
