@@ -44,6 +44,8 @@ def get_db_for_scheduler():
 
 @app.on_event("startup")
 async def startup_event():
+    if os.getenv("DISABLE_RATE_LIMITER", "false").lower() == "true":
+        return
     # Initialize Redis for rate limiting
     REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
     REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
