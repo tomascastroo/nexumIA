@@ -141,7 +141,11 @@ class WebhookService:
             amount_paid=float(data.get('transaction_amount', 0)),
             currency=data.get('currency_id', 'ARS'),
             payment_method=data.get('payment_method_id'),
-            paid_at=datetime.fromisoformat(data.get('date_approved', '')) if data.get('date_approved') else None,
+            paid_at=(
+                datetime.fromisoformat(data.get('date_approved').replace('Z', '+00:00'))
+                if data.get('date_approved')
+                else None
+            ),
             metadata=data.get('metadata', {})
         )
     

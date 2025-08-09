@@ -2,6 +2,7 @@ import pytest
 from httpx import AsyncClient
 from httpx import ASGITransport
 import sys
+
 def _load_app(monkeypatch):
     monkeypatch.setenv("SECRET_KEY", "test_secret_key")
     monkeypatch.setenv("DATABASE_URL", "sqlite:///./test.db")
@@ -14,7 +15,8 @@ def _load_app(monkeypatch):
     return mainmod.app
 
 @pytest.mark.asyncio
-async def test_analyze_strategies_and_status():
+async def test_analyze_strategies_and_status(monkeypatch):
+    app = _load_app(monkeypatch)
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         strategies = [{"id": 1, "name": "Estrategia 1"}, {"id": 2, "name": "Estrategia 2"}]
