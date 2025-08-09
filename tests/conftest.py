@@ -22,4 +22,19 @@ def test_env(monkeypatch):
     import models.Strategy  # noqa: F401
     import models.DebtorDataset  # noqa: F401
     Base.metadata.create_all(bind=engine)
+    # Crear dataset por defecto para FKs
+    from sqlalchemy.orm import sessionmaker
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    try:
+        from models.DebtorDataset import DebtorDataset
+        if session.query(DebtorDataset).first() is None:
+            session.add(DebtorDataset(name="default", description="test", user_id=None))
+            session.commit()
+        # Exponer DEFAULT_DATASET_ID
+        default_dataset = session.query(DebtorDataset).first()
+        if default_dataset:
+            monkeypatch.setenv("DEFAULT_DATASET_ID", str(default_dataset.id))
+    finally:
+        session.close()
     yield
