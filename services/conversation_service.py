@@ -1,4 +1,64 @@
 from sqlalchemy.orm import Session, joinedload
+from typing import Any, Dict, Optional, List, cast
+from db.db import SessionLocal
+from models.Debtor import Debtor
+from services import openai_service
+
+# Nueva API unificada de conversación
+def start_conversation(bot_id: int, debtor_id: int, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Inicializa una conversación para un deudor y retorna su estado.
+
+    conversation_id: usamos debtor_id como identificador de conversación.
+    """
+    db: Session = SessionLocal()
+    try:
+        debtor = db.query(Debtor).filter(Debtor.id == debtor_id).first()
+        if not debtor:
+            raise ValueError("Debtor no encontrado")
+        history: List[Dict[str, str]] = []
+        if context:
+            history.append({"role": "system", "content": str(context)})
+        debtor.conversation_history = history
+        db.commit()
+        return {"conversation_id": str(debtor_id), "history": history}
+    finally:
+        db.close()
+
+
+def continue_conversation(conversation_id: str, message: str) -> Dict[str, Any]:
+    """Continúa una conversación existente y retorna actualización básica.
+
+    conversation_id puede ser el debtor_id (str numérico) o el phone del deudor.
+    """
+    db: Session = SessionLocal()
+    try:
+        phone: Optional[str] = None
+        debtor: Optional[Debtor] = None
+        if conversation_id.isdigit():
+            debtor = db.query(Debtor).filter(Debtor.id == int(conversation_id)).first()
+            if debtor and debtor.phone:
+                phone = str(debtor.phone)
+        else:
+            phone = conversation_id
+            debtor = db.query(Debtor).filter(Debtor.phone == phone).first()
+        if not debtor or not phone:
+            raise ValueError("Conversación no encontrada para conversation_id")
+
+        # Reusar la lógica existente async de manejo de mensajes
+        import asyncio
+        from services.conversation_service import handle_incoming_message
+        response_text = asyncio.run(handle_incoming_message(phone, message, db))
+        return {"conversation_id": conversation_id, "response": response_text}
+    finally:
+        db.close()
+
+
+def classify_state(text: str) -> str:
+    """Clasifica estado usando OpenAI a través del servicio unificado."""
+    try:
+        return openai_service.classify_state(text)
+    except Exception:
+        return "GRIS"
 from models.Debtor import Debtor
 from models.Campaign import Campaign
 from models.DebtorDataset import DebtorDataset
@@ -6,6 +66,9 @@ from models.Strategy import Strategy
 from services.debtor_service import update_state
 from services.openai_service import generate_openai_response_sync
 from services.whatsapp_service import send_whatsapp_message
+from services.structured_prompt_service import structured_prompt_service
+from services.traceability_service import traceability_service
+from services.payment_link_service import payment_link_service
 import json
 from typing import List, Dict, Any, Optional, cast 
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam, ChatCompletionAssistantMessageParam
@@ -35,7 +98,7 @@ async def handle_incoming_message(phone: str, body: str, db: Session):
     current_history.append({"role": "user", "content": body})
 
     new_state = update_state(db, debtor.id, body)
-    debtor.state = cast(str, new_state) # Cast to str for linter, ORM handles type
+    debtor.state = cast(str, new_state)  # type: ignore
 
     # Normalize incoming message body for keyword matching
     normalized_body = body.lower().strip().replace("?", "") # Remove question mark as well
@@ -61,6 +124,42 @@ async def handle_incoming_message(phone: str, body: str, db: Session):
     print(f"[DEBUG] Incoming message body (normalized): {normalized_body}")
     print(f"[DEBUG] Is debt inquiry: {is_debt_inquiry}")
 
+    # Check for payment link request using the new service
+    current_custom_data = cast(Dict[str, Any], debtor.custom_data) if debtor.custom_data is not None else {}
+    should_generate_link, reason, link_data = payment_link_service.should_generate_payment_link(
+        user_message=body,
+        debtor_state=new_state,
+        conversation_history=current_history,
+        debtor_data=current_custom_data
+    )
+    
+    print(f"[DEBUG] Payment link analysis - Should generate: {should_generate_link}, Reason: {reason}")
+
+    if should_generate_link:
+        print("[DEBUG] Payment link should be generated. Creating response.")
+        response_text = payment_link_service.generate_payment_link_response(
+            debtor_state=new_state,
+            debtor_data=current_custom_data,
+            decision_data=link_data
+        )
+        
+        # Si es estado VERDE, generar el link real
+        if new_state == "VERDE":
+            debt_amount = current_custom_data.get("deuda", 0)
+            payment_info = payment_link_service.create_payment_link(
+                debtor_id=cast(int, debtor.id),
+                amount=float(debt_amount) if debt_amount else 0,
+                method="mock"
+            )
+            # Reemplazar el placeholder con el link real
+            response_text = response_text.replace("[GENERAR_LINK_AQUI]", payment_info["payment_link"])
+        
+        current_history.append({"role": "assistant", "content": response_text})
+        debtor.conversation_history = cast(List[Dict[str, str]], current_history)  # type: ignore
+        db.commit()
+        print("[DEBUG] Payment link response generated. Returning.")
+        return response_text
+
     if is_debt_inquiry and debtor.custom_data is not None:
         print("[DEBUG] Debt inquiry detected and debtor.custom_data exists.")
         current_custom_data = cast(Dict[str, Any], debtor.custom_data) if debtor.custom_data is not None else {}
@@ -82,7 +181,7 @@ async def handle_incoming_message(phone: str, body: str, db: Session):
             print("[DEBUG] Debt amount is a valid number. Preparing direct response.")
             response_text = f"Tu deuda es de ${debt_amount:,.2f}".replace(",", ".") # Format with 2 decimal places and use dot for thousands separator
             current_history.append({"role": "assistant", "content": response_text})
-            debtor.conversation_history = cast(List[Dict[str, str]], current_history)
+            debtor.conversation_history = cast(List[Dict[str, str]], current_history)  # type: ignore
             db.commit()
             # send_whatsapp_message(f"whatsapp:{phone}", response_text) # REMOVED
             print("[DEBUG] Direct debt response generated. Returning.")
@@ -90,65 +189,92 @@ async def handle_incoming_message(phone: str, body: str, db: Session):
         else:
             print("[DEBUG] Debt amount not a valid number or not found. Falling back to LLM.")
 
-    # Original LLM prompt generation logic for other intents
-    strategy_rules = {}
-    active_campaign: Optional[Campaign] = None
-
-    if debtor.debtor_dataset and debtor.debtor_dataset.campaigns:
-        # Find an active campaign for the debtor's dataset
-        for campaign_obj in debtor.debtor_dataset.campaigns:
-            # Assuming 'active' is the relevant status for a conversational campaign
-            # You might need more sophisticated logic here if multiple campaigns can be active or if there's a priority
-            if campaign_obj.status == "active" and campaign_obj.strategy:
-                active_campaign = campaign_obj
-                break
-
-    if active_campaign and active_campaign.strategy:
-        strategy_rules = cast(Dict[str, Any], active_campaign.strategy.rules)
-    else:
-        print("[DEBUG] No active campaign or strategy found for this debtor's dataset. Using default/empty prompt rules.")
-        # Fallback if no active campaign or strategy found, base_prompt and rules_for_state will use defaults
-
-    base_prompt = strategy_rules.get("prompt", "")
-    rules_by_state = strategy_rules.get("rules_by_state", {})
-    rules_for_state = rules_by_state.get(new_state, "No hay reglas definidas para este estado.")
-
-    custom_data_str = ""
+    # Get strategy information for LLM processing
     current_custom_data_for_llm = cast(Dict[str, Any], debtor.custom_data) if debtor.custom_data is not None else {}
 
-    if current_custom_data_for_llm:
-        custom_data_str = "\nDatos del Deudor:\n"
-        for key, value in current_custom_data_for_llm.items():
-            custom_data_str += f"- {key}: {value}\n"
+    # Find active campaign and strategy
+    active_campaign: Optional[Campaign] = None
+    strategy: Optional[Strategy] = None
+    
+    if debtor.debtor_dataset and debtor.debtor_dataset.campaigns:
+        for campaign_obj in debtor.debtor_dataset.campaigns:
+            if campaign_obj.status == "active" and campaign_obj.strategy:
+                active_campaign = campaign_obj
+                strategy = campaign_obj.strategy
+                break
 
-    system_prompt = f"""
-Sos un agente de cobranzas profesional. Seguí estas reglas según el estado actual del deudor.
+    # Determine if this is the first message
+    is_first_message = len(current_history) <= 2  # user message + assistant response
 
-Estado del deudor: {new_state}
+    if strategy:
+        print(f"[DEBUG] Using strategy: {strategy.name}")
+        
+        # Generate structured prompt using the new rule decision system
+        prompt_result = structured_prompt_service.generate_action_specific_prompt(
+            strategy=strategy,
+            debtor_data=current_custom_data_for_llm,
+            current_state=new_state,
+            conversation_history=current_history,
+            user_message=body,
+            is_first_message=is_first_message
+        )
+        
+        structured_prompt = prompt_result['prompt']
+        decision = prompt_result['decision']
+        
+        print(f"[DEBUG] Generated structured prompt length: {len(structured_prompt)}")
+        print(f"[DEBUG] Action type: {decision.action_type}")
+        print(f"[DEBUG] Structured prompt preview: {structured_prompt[:500]}...")
+        
+    else:
+        print("[DEBUG] No active campaign or strategy found. Using default prompt.")
+        structured_prompt = """
+Actuás como un asistente especializado en cobranzas.
+Tu misión es contactar de manera eficiente a un deudor para facilitar el pago.
+No respondas como humano ni toques temas irrelevantes.
 
-Reglas:
-{rules_for_state}
+INFORMACIÓN DEL DEUDOR:
+- Estado actual: GRIS
 
-{base_prompt}
+INSTRUCCIONES ESPECÍFICAS: Usar tono profesional y respetuoso para establecer comunicación.
 
-INSTRUCCIÓN CLAVE: Es *CRÍTICO* que utilices y consultes *siempre* los 'Datos del Deudor' proporcionados a continuación para personalizar y basar *todas* tus respuestas. Prioriza el uso de la información específica del deudor para hacer tus respuestas relevantes y personalizadas. Si el deudor pregunta por información específica que está en sus Datos del Deudor, refiérete directamente a esa información. **Bajo ninguna circunstancia debes generar un placeholder como '[monto deuda]' o '[valor deuda]'. Siempre debes intentar usar el valor numérico real de la deuda si está disponible en 'Datos del Deudor' para cualquier contexto, pero la respuesta sobre el monto exacto será manejada por el sistema.**
+INSTRUCCIONES FINALES:
+- Responde de manera profesional y empática
+- Mantén el enfoque en la cobranza
+- NO inventes descuentos, cuotas o condiciones no autorizadas
+"""
 
-{custom_data_str}
-    """.strip()
-
-    messages: List[ChatCompletionMessageParam] = [ChatCompletionSystemMessageParam(role="system", content=system_prompt)]
-
+    # Convert conversation history to OpenAI format
+    messages: List[ChatCompletionMessageParam] = []
+    
+    # Add system message with structured prompt
+    messages.append(ChatCompletionSystemMessageParam(role="system", content=structured_prompt))
+    
+    # Add conversation history (excluding system messages)
     for msg in current_history:
         if msg['role'] == 'user':
             messages.append(ChatCompletionUserMessageParam(role="user", content=msg['content']))
         elif msg['role'] == 'assistant':
             messages.append(ChatCompletionAssistantMessageParam(role="assistant", content=msg['content']))
 
-    response = generate_openai_response_sync(messages)
+    # Generate response using OpenAI
+    response = generate_openai_response_sync(messages=messages)
 
     current_history.append({"role": "assistant", "content": response})
-    debtor.conversation_history = cast(List[Dict[str, str]], current_history) # Cast to List[Dict] for linter, ORM handles type
+    debtor.conversation_history = cast(List[Dict[str, str]], current_history)  # type: ignore
     db.commit()
+
+    # Log decision for traceability
+    if strategy:
+        traceability_service.log_rule_decision(
+            debtor_id=cast(int, debtor.id),
+            strategy_id=cast(int, strategy.id),
+            user_message=body,
+            decision=decision,
+            llm_response=response,
+            conversation_history=current_history,
+            debtor_data=current_custom_data_for_llm
+        )
 
     # send_whatsapp_message(f"whatsapp:{phone}", response) # REMOVED
     print("[DEBUG] LLM response generated. Returning.")
