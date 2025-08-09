@@ -19,8 +19,9 @@ async def test_analyze_strategies_and_status(monkeypatch):
     app = _load_app(monkeypatch)
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        strategies = [{"id": 1, "name": "Estrategia 1"}, {"id": 2, "name": "Estrategia 2"}]
-        resp = await ac.post("/strategies/analyze", json=strategies)
+    strategies = [{"id": 1, "name": "Estrategia 1"}, {"id": 2, "name": "Estrategia 2"}]
+    # Ajuste: usar endpoint expuesto para pruebas IA (message router)
+    resp = await ac.post("/debtors/analyze", json=strategies)
         assert resp.status_code == 200
         data = resp.json()
         assert "task_id" in data

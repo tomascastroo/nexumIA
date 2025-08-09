@@ -20,5 +20,6 @@ def test_env(monkeypatch):
     import models.Debtor  # noqa: F401
     import models.Campaign  # noqa: F401
     import models.Strategy  # noqa: F401
+    import models.DebtorDataset  # noqa: F401
     Base.metadata.create_all(bind=engine)
     yield
