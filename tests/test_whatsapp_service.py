@@ -1,4 +1,3 @@
-import os
 import types
 
 
@@ -14,7 +13,8 @@ def test_whatsapp_env_usage(monkeypatch):
             def create(body, from_, to):
                 return types.SimpleNamespace(sid="fake_sid")
 
-    import services.whatsapp_service as ws
+    import importlib, services.whatsapp_service as ws
+    importlib.reload(ws)
     ws._client = DummyClient()
 
     sid = ws.send_whatsapp_message("whatsapp:+5491100000000", "hola")

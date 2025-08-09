@@ -1,10 +1,16 @@
+import sys
 from fastapi.testclient import TestClient
-from main import app
 
 
 def test_admin_guard(monkeypatch):
     monkeypatch.setenv("SECRET_KEY", "test_secret_key")
-    client = TestClient(app)
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///./test.db")
+    sys.modules.pop("db.db", None)
+    sys.modules.pop("main", None)
+    from db.db import Base, engine
+    Base.metadata.create_all(bind=engine)
+    import main as mainmod
+    client = TestClient(mainmod.app)
 
     # Create admin user directly via register + manual role tweak might not persist; so rely on default user and expect 403
     r = client.post("/api/v1/auth/register", json={"email": "user@x.com", "password": "pw"})

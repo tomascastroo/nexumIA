@@ -1,13 +1,21 @@
-import os
+import sys
+import importlib
 from fastapi.testclient import TestClient
-from main import app
 
 
 def test_register_and_login_and_protected_route(monkeypatch):
-    # Ensure SECRET_KEY for tests
+    # Use SQLite for tests and set SECRET_KEY before importing app
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///./test.db")
     monkeypatch.setenv("SECRET_KEY", "test_secret_key")
 
-    client = TestClient(app)
+    # Reload modules to pick up env
+    sys.modules.pop("db.db", None)
+    sys.modules.pop("main", None)
+    import db.db as dbmod
+    from db.db import Base, engine
+    Base.metadata.create_all(bind=engine)
+    import main as mainmod
+    client = TestClient(mainmod.app)
 
     # Register
     r = client.post("/api/v1/auth/register", json={"email": "a@a.com", "password": "x"})

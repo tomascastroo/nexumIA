@@ -1,9 +1,17 @@
 from fastapi.testclient import TestClient
-from main import app
 
 
 def test_webhook_responds_quickly(monkeypatch):
-    client = TestClient(app)
+    # Ensure app loads with known env
+    monkeypatch.setenv("SECRET_KEY", "test_secret_key")
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///./test.db")
+    import sys
+    sys.modules.pop("db.db", None)
+    sys.modules.pop("main", None)
+    from db.db import Base, engine
+    Base.metadata.create_all(bind=engine)
+    import main as mainmod
+    client = TestClient(mainmod.app)
 
     # Monkeypatch Celery task to avoid real queue
     class DummyAsyncResult:
