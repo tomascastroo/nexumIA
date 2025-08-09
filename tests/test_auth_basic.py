@@ -7,6 +7,7 @@ def test_register_and_login_and_protected_route(monkeypatch):
     # Use SQLite for tests and set SECRET_KEY before importing app
     monkeypatch.setenv("DATABASE_URL", "sqlite:///./test.db")
     monkeypatch.setenv("SECRET_KEY", "test_secret_key")
+    monkeypatch.setenv("DISABLE_RATE_LIMITER", "true")
 
     # Reload modules to pick up env
     sys.modules.pop("db.db", None)

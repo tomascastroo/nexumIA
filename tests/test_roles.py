@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 def test_admin_guard(monkeypatch):
     monkeypatch.setenv("SECRET_KEY", "test_secret_key")
     monkeypatch.setenv("DATABASE_URL", "sqlite:///./test.db")
+    monkeypatch.setenv("DISABLE_RATE_LIMITER", "true")
     sys.modules.pop("db.db", None)
     sys.modules.pop("main", None)
     from db.db import Base, engine

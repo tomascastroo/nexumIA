@@ -5,6 +5,7 @@ def test_webhook_responds_quickly(monkeypatch):
     # Ensure app loads with known env
     monkeypatch.setenv("SECRET_KEY", "test_secret_key")
     monkeypatch.setenv("DATABASE_URL", "sqlite:///./test.db")
+    monkeypatch.setenv("DISABLE_RATE_LIMITER", "true")
     import sys
     sys.modules.pop("db.db", None)
     sys.modules.pop("main", None)
