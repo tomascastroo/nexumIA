@@ -1,16 +1,27 @@
 from openai import OpenAI
 import json
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam, ChatCompletionAssistantMessageParam
 
 import os
 from dotenv import load_dotenv
+import structlog
+
+logger = structlog.get_logger()
 
 load_dotenv()
 
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 VALID_STATES = {"VERDE", "AMARILLO", "ROJO", "GRIS"}
+
+# Importar tareas Celery para OpenAI
+from tasks.openai_tasks import (
+    generate_first_message_task,
+    generate_response_task, 
+    classify_state_task,
+    analyze_conversation_context_task
+)
 
 from services.cache_service import RedisCache
 from core.metrics import cache_hit_counter, cache_miss_counter
@@ -295,10 +306,112 @@ Devolvé solo una palabra exacta en mayúsculas: VERDE, AMARILLO, ROJO o GRIS.
         state = state_content.strip().upper()
 
         if state not in VALID_STATES:
-            print(f"Estado inválido devuelto por GPT: {state}, usando GRIS como fallback")
+            logger.warning(f"Estado inválido devuelto por GPT: {state}, usando GRIS como fallback")
             return "GRIS"
 
         return state
     except Exception as e:
-        print(f"Error en classify_state: {e}, usando GRIS como fallback")
+        logger.error(f"Error en classify_state: {e}, usando GRIS como fallback")
         return "GRIS"
+
+
+# ============================================================================
+# WRAPPERS ASÍNCRONOS PARA CELERY
+# ============================================================================
+# Estas funciones encolan las tareas en Celery y devuelven task_id para seguimiento
+# Las funciones síncronas originales se mantienen para compatibilidad y testing
+
+def generate_first_message_async(initial_instruction: str, model: str = "gpt-4o-mini") -> str:
+    """
+    Wrapper asíncrono que encola la generación del primer mensaje en Celery.
+    
+    Args:
+        initial_instruction: Instrucción inicial para el bot
+        model: Modelo de OpenAI a usar
+        
+    Returns:
+        str: Task ID de Celery para seguimiento
+        
+    Note:
+        Para obtener el resultado, usar: task = generate_first_message_task.AsyncResult(task_id)
+        task.get() para esperar el resultado, o task.ready() para verificar si está listo
+    """
+    task = generate_first_message_task.delay(initial_instruction, model)
+    return task.id
+
+def generate_response_async(messages: List[ChatCompletionMessageParam], model: str = "gpt-4o-mini") -> str:
+    """
+    Wrapper asíncrono que encola la generación de respuesta en Celery.
+    
+    Args:
+        messages: Lista de mensajes de la conversación
+        model: Modelo de OpenAI a usar
+        
+    Returns:
+        str: Task ID de Celery para seguimiento
+        
+    Note:
+        Para obtener el resultado, usar: task = generate_response_task.AsyncResult(task_id)
+        task.get() para esperar el resultado, o task.ready() para verificar si está listo
+    """
+    task = generate_response_task.delay(messages, model)
+    return task.id
+
+def classify_state_async(message: str, conversation_history: Optional[List[Dict[str, str]]] = None) -> str:
+    """
+    Wrapper asíncrono que encola la clasificación de estado en Celery.
+    
+    Args:
+        message: Mensaje actual del usuario
+        conversation_history: Historial de la conversación
+        
+    Returns:
+        str: Task ID de Celery para seguimiento
+        
+    Note:
+        Para obtener el resultado, usar: task = classify_state_task.AsyncResult(task_id)
+        task.get() para esperar el resultado, o task.ready() para verificar si está listo
+    """
+    task = classify_state_task.delay(message, conversation_history)
+    return task.id
+
+def analyze_conversation_context_async(conversation_history: List[Dict[str, str]], current_message: str) -> str:
+    """
+    Wrapper asíncrono que encola el análisis de contexto en Celery.
+    
+    Args:
+        conversation_history: Historial de la conversación
+        current_message: Mensaje actual del usuario
+        
+    Returns:
+        str: Task ID de Celery para seguimiento
+        
+    Note:
+        Para obtener el resultado, usar: task = analyze_conversation_context_task.AsyncResult(task_id)
+        task.get() para esperar el resultado, o task.ready() para verificar si está listo
+    """
+    task = analyze_conversation_context_task.delay(conversation_history, current_message)
+    return task.id
+
+def get_task_result(task_id: str, timeout: int = 30) -> Union[str, Dict[str, Any], None]:
+    """
+    Obtiene el resultado de una tarea Celery por su ID.
+    
+    Args:
+        task_id: ID de la tarea Celery
+        timeout: Tiempo máximo de espera en segundos
+        
+    Returns:
+        Union[str, Dict[str, Any], None]: Resultado de la tarea o None si hay timeout/error
+        
+    Note:
+        Esta función es útil para obtener resultados de tareas asíncronas
+        cuando se necesita el resultado inmediatamente en el hilo principal
+    """
+    try:
+        from tasks.openai_tasks import celery_app
+        task = celery_app.AsyncResult(task_id)
+        return task.get(timeout=timeout)
+    except Exception as e:
+        logger.error(f"Error obteniendo resultado de tarea {task_id}: {e}")
+        return None
