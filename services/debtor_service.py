@@ -7,7 +7,7 @@ import json
 from sqlalchemy.orm import Session
 from models.Debtor import Debtor
 from schemas.debtor import DebtorCreate, DebtorUpdate
-from services.openai_service import classify_state
+from services.openai_service import classify_state_async, get_task_result
 
 class DebtorNotFound(Exception): pass
 
@@ -67,8 +67,11 @@ def update_state(db: Session, debtor_id: int, message: str, user_id: int = None)
 
     current_state = db_debtor.state or "GRIS"
     
-    # Obtener nuevo estado con IA
-    new_state = classify_state(message, conversation_history)
+    # Obtener nuevo estado con IA usando Celery
+    task_id = classify_state_async(message, conversation_history)
+    new_state = get_task_result(task_id, timeout=30)
+    if new_state is None:
+        new_state = "GRIS"
     
     # Evitar bajar estado si hay contexto de pago
     if current_state in ["VERDE", "AMARILLO"]:

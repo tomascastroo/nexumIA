@@ -55,9 +55,11 @@ def continue_conversation(conversation_id: str, message: str) -> ConversationUpd
 
 
 def classify_state(text: str) -> str:
-    """Clasifica estado usando OpenAI a través del servicio unificado."""
-    from services.openai_service import classify_state as oai_classify_state
+    """Clasifica estado usando OpenAI a través de Celery."""
+    from services.openai_service import classify_state_async, get_task_result
     try:
-        return oai_classify_state(text)
+        task_id = classify_state_async(text)
+        result = get_task_result(task_id, timeout=30)
+        return result if result else "GRIS"
     except Exception:
         return "GRIS"
