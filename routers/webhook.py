@@ -8,6 +8,7 @@ import json
 from tasks.ia_tasks import process_incoming_message
 from typing import List, Dict, Any, cast
 from core.logger import log_business_event
+import os
 
 router = APIRouter()
 
@@ -38,11 +39,14 @@ async def whatsapp_webhook(request: Request):
     cleaned_number = normalize_phone(raw_number)
     debtor = db.query(Debtor).filter(Debtor.phone == cleaned_number).first()
 
-    print(debtor) # Keep this debug print if useful
-
     if debtor is None:
         # If debtor not found, create a new one (minimal creation)
-        debtor = Debtor(phone=cleaned_number, conversation_history=[]) # Use empty list for JSON default
+        default_dataset_id = int(os.getenv("DEFAULT_DATASET_ID", "1"))
+        debtor = Debtor(
+            phone=cleaned_number,
+            conversation_history=[],
+            debtor_dataset_id=default_dataset_id
+        )
         db.add(debtor)
         db.commit()
         db.refresh(debtor)
