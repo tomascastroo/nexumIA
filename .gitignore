@@ -15,3 +15,14 @@ htmlcov/
 
 # Environment files
 .env
+
+# Database files
+*.db
+test.db
+*.sqlite
+*.sqlite3
+
+# IDE files
+.idea/
+*.swp
+*.swo
