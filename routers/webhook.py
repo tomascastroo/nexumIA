@@ -5,7 +5,6 @@ from models.Debtor import Debtor
 from services.debtor_service import update_state
 from services.openai_service import generate_openai_response_sync
 import json
-from services.conversation_service import handle_incoming_message as handle_conversation
 from tasks.ia_tasks import process_incoming_message
 from typing import List, Dict, Any, cast
 from core.logger import log_business_event
