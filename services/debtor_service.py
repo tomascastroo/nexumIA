@@ -4,6 +4,7 @@ Este servicio espera que todas las funciones reciban la sesión de base de datos
 from datetime import datetime
 from fastapi import HTTPException
 import json
+from sqlalchemy.orm import Session
 from models.Debtor import Debtor
 from schemas.debtor import DebtorCreate, DebtorUpdate
 from services.openai_service import classify_state
