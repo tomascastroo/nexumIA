@@ -19,18 +19,20 @@ def test_register_and_login_and_protected_route(monkeypatch):
     import main as mainmod
     client = TestClient(mainmod.app)
 
-    # Register
-    r = client.post("/api/v1/auth/register", json={"email": "a@a.com", "password": "x"})
+    # Register with unique email
+    import uuid
+    unique_email = f"test_{uuid.uuid4().hex[:8]}@test.com"
+    r = client.post("/api/v1/auth/register", json={"email": unique_email, "password": "x"})
     assert r.status_code in (200, 201)
 
     # Login
-    r = client.post("/api/v1/auth/login", json={"email": "a@a.com", "password": "x"})
+    r = client.post("/api/v1/auth/login", json={"email": unique_email, "password": "x"})
     assert r.status_code == 200
     token = r.json()["access_token"]
 
-    # Call a protected endpoint that exists (debtor list or similar)
+    # Call a protected endpoint that exists (whoami endpoint)
     headers = {"Authorization": f"Bearer {token}"}
-    r = client.get("/api/v1/debtor", headers=headers)
-    # Accept 200 OK or 404/empty depending on dataset, but not unauthorized
-    assert r.status_code in (200, 404)
+    r = client.get("/api/v1/auth/whoami", headers=headers)
+    # Should return 200 OK with user info
+    assert r.status_code == 200
 

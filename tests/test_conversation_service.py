@@ -18,8 +18,17 @@ def test_start_and_continue_conversation(monkeypatch):
 
     # Crear un debtor dummy
     from models.Debtor import Debtor
+    import os
     db = SessionLocal()
-    debtor = Debtor(phone="5491100000000", conversation_history=[])
+    
+    # Obtener el DEFAULT_DATASET_ID del environment
+    default_dataset_id = int(os.getenv("DEFAULT_DATASET_ID", "1"))
+    
+    debtor = Debtor(
+        phone="5491100000000", 
+        conversation_history=[],
+        debtor_dataset_id=default_dataset_id
+    )
     db.add(debtor)
     db.commit()
     db.refresh(debtor)
