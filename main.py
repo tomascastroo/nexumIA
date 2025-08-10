@@ -6,6 +6,7 @@ from fastapi.responses import Response
 from routers import campaign,strategy,bot,test_whatsapp,webhook,traceability
 from routers import message
 from middleware.security_middleware import setup_cors_middleware, setup_security_middleware
+from middleware.rate_limit import rate_limit_middleware
 from apscheduler.schedulers.background import BackgroundScheduler
 from services.followup_service import run_daily_followups
 from db.db import SessionLocal
@@ -68,6 +69,10 @@ app = FastAPI(
 
 setup_cors_middleware(app)
 setup_security_middleware(app)
+
+# Aplicar middleware de rate limiting si no está deshabilitado
+if os.getenv("DISABLE_RATE_LIMITER", "false").lower() != "true":
+    app.middleware("http")(rate_limit_middleware)
 
 scheduler = BackgroundScheduler()
 
