@@ -1,36 +1,33 @@
 # En tests, se usa sessionmaker para aislar la base de datos de test. Nunca importar Session de pytest.
 import base64
 import os
+import sys
 import pytest
+
+# Configuración temprana de entorno para que los módulos de app usen SQLite en tests
+os.environ.setdefault("SECRET_KEY", "test_secret_key")
+os.environ.setdefault("DATABASE_URL", "sqlite:///./test.db")
+os.environ.setdefault("DISABLE_RATE_LIMITER", "true")
+# Fernet key de 32 bytes en base64 urlsafe
+if not os.getenv("ENCRYPTION_KEY"):
+    os.environ["ENCRYPTION_KEY"] = base64.urlsafe_b64encode(b"0" * 32).decode()
+
+# Asegurar que el root del proyecto esté en sys.path para imports como `db.db`
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 
 @pytest.fixture(autouse=True)
 def test_env(monkeypatch):
     """Fixture que configura el entorno de test y crea la base de datos."""
-    monkeypatch.setenv("SECRET_KEY", "test_secret_key")
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///./test.db")
+    monkeypatch.setenv("SECRET_KEY", os.getenv("SECRET_KEY", "test_secret_key"))
+    monkeypatch.setenv("DATABASE_URL", os.getenv("DATABASE_URL", "sqlite:///./test.db"))
     monkeypatch.setenv("DISABLE_RATE_LIMITER", "true")
     
     # Fernet key debe ser 32 bytes base64 urlsafe
-    key = base64.urlsafe_b64encode(b"0" * 32).decode()
+    key = os.getenv("ENCRYPTION_KEY") or base64.urlsafe_b64encode(b"0" * 32).decode()
     monkeypatch.setenv("ENCRYPTION_KEY", key)
-    
-    # Limpiar base de datos de pruebas y módulos para evitar conflictos
-    import sys
-    try:
-        db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "test.db")
-        if os.path.exists(db_path):
-            os.remove(db_path)
-    except Exception:
-        pass
-
-    # Purgar módulos de models y dependencias para asegurar un estado limpio
-    to_delete = [name for name in list(sys.modules.keys()) if name == "db.db" or name == "core.security" or name.startswith("models")]
-    for module_name in to_delete:
-        try:
-            del sys.modules[module_name]
-        except KeyError:
-            pass
     
     # Importar db y modelos para registrar metadata
     from db.db import Base, engine
@@ -38,7 +35,7 @@ def test_env(monkeypatch):
     import models  # noqa: F401
     from models import User, Debtor, Campaign, Strategy, DebtorDataset, DebtorCustomField, DebtPayment, Bot  # noqa: F401
     
-    # Crear todas las tablas
+    # Crear todas las tablas (idempotente)
     Base.metadata.create_all(bind=engine)
     
     # Crear datos de prueba básicos
@@ -82,3 +79,13 @@ def test_env(monkeypatch):
         session.close()
     
     yield
+
+    # Limpieza entre pruebas: vaciar tablas pero mantener schema
+    session = Session()
+    try:
+        # Orden seguro para borrar datos según FKs
+        for table in reversed(Base.metadata.sorted_tables):
+            session.execute(table.delete())
+        session.commit()
+    finally:
+        session.close()
