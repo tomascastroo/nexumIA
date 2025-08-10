@@ -1,10 +1,12 @@
+"""
+Este servicio espera que todas las funciones reciban la sesión de base de datos (db: Session) inyectada por el router vía Depends(get_db). No crear la sesión internamente.
+"""
 import json
-from pytest import Session
+from sqlalchemy.orm import Session
 from models.Bot import Bot
 from models.Debtor import Debtor
 from models.Strategy import Strategy
 from models.Campaign import Campaign
-from db.db import SessionLocal
 from models.DebtorDataset import DebtorDataset
 
 from services.whatsapp_service import send_whatsapp_message

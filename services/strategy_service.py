@@ -1,6 +1,8 @@
+"""
+Este servicio espera que todas las funciones reciban la sesión de base de datos (db: Session) inyectada por el router vía Depends(get_db). No crear la sesión internamente.
+"""
 from sqlalchemy.orm import Session
 from models.Strategy import Strategy
-from db.db import SessionLocal
 from schemas.campaign import CampaignCreate
 from schemas.strategy import StrategyCreate, StrategyUpdate, StrategyOut
 

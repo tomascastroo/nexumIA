@@ -1,3 +1,4 @@
+# En tests, se usa sessionmaker para aislar la base de datos de test. Nunca importar Session de pytest.
 import base64
 import os
 import pytest

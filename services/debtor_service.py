@@ -1,6 +1,8 @@
+"""
+Este servicio espera que todas las funciones reciban la sesión de base de datos (db: Session) inyectada por el router vía Depends(get_db). No crear la sesión internamente.
+"""
 from datetime import datetime
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
 import json
 from models.Debtor import Debtor
 from schemas.debtor import DebtorCreate, DebtorUpdate
