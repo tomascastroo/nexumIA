@@ -50,32 +50,3 @@ def delete_bot(bot_id:int,db:Session=Depends(get_db),current_user: User = Depend
     if db_bot is None:
         raise HTTPException(status_code=404, detail="Bot not found")
     return db_bot
-
-
-# @router.post("/webhook/whatsapp")
-# async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
-#     data = await request.json()
-
-#     # Extraer mensaje entrante según el formato API WhatsApp
-#     try:
-#         entry = data["entry"][0]
-#         changes = entry["changes"][0]
-#         value = changes["value"]
-#         messages = value.get("messages", [])
-#         if not messages:
-#             return {"status": "no messages"}
-
-#         msg = messages[0]
-#         phone = msg["from"]  # número usuario que manda mensaje
-#         text = msg["text"]["body"]
-
-#         # Aquí tenés que saber a qué bot pertenece ese número (ejemplo estático)
-#         bot_id = 1
-
-#         # Ejecutar en background la respuesta para no bloquear webhook
-#         background_tasks.add_task(bot_interaction_service.handle_incoming_message, bot_id, phone, text)
-
-#         return {"status": "message received"}
-
-#     except Exception as e:
-#         return {"error": str(e)}

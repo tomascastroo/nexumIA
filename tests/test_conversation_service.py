@@ -33,11 +33,11 @@ def test_start_and_continue_conversation(monkeypatch):
     # Probar start_conversation
     from services.conversation_service import start_conversation, continue_conversation, classify_state
     conv = start_conversation(bot_id=1, debtor_id=debtor.id, context={"greeting": "hola"})
-    assert conv["conversation_id"] == str(debtor.id)
+    assert conv.conversation_id == str(debtor.id)
 
     # Probar continue_conversation
     update = continue_conversation(str(debtor.id), "hola")
-    assert "response" in update
+    assert hasattr(update, "response")
 
     # Probar classify_state
     state = classify_state("quiero pagar")

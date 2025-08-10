@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, DateTime,Integer,String,Date,ForeignKey
+from sqlalchemy import Column, DateTime,Integer,String,Date,ForeignKey, func
 from sqlalchemy.orm import relationship
 from db.db import Base
 
@@ -15,11 +15,12 @@ class Campaign(Base):
     status = Column(String, default="inactive")
     start_date = Column(DateTime, default=datetime.utcnow)
     end_date = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
 
     bot = relationship("Bot", back_populates="campaigns")
     strategy = relationship("Strategy", back_populates="campaigns")
+    debt_payments = relationship("DebtPayment", back_populates="campaign", cascade="all, delete-orphan")
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="campaigns")
     debtor_dataset_id = Column(Integer, ForeignKey("debtor_datasets.id"), nullable=False)

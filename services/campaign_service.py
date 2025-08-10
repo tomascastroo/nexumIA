@@ -14,6 +14,7 @@ from fastapi import HTTPException
 import re
 import difflib
 
+# NOTA: Este servicio devuelve objetos ORM. La conversión a Pydantic debe hacerse en el router usando .model_validate(obj, from_attributes=True)
 def create_campaign(db: Session, campaign: CampaignCreate, user_id: int):
     strategy = db.query(Strategy).filter(Strategy.id == campaign.strategy_id, Strategy.user_id == user_id).first()
     if not strategy:

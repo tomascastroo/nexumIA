@@ -1,11 +1,11 @@
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, validator
 from datetime import datetime
 
 from schemas.bot import BotRead
 from schemas.debtor import DebtorRead
 from schemas.debtor_dataset import DebtorDatasetRead
-from schemas.strategy import StrategyRead
+from schemas.strategy import Strategy
 
 class CampaignBase(BaseModel):
     name: str
@@ -46,19 +46,15 @@ class CampaignRead(BaseModel):
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
     debtor_dataset_id: Optional[int] = None
-    strategy: Optional[StrategyRead] = None
+    strategy: Optional[Strategy] = None
     bot: Optional[BotRead] = None  # opcional si querés mostrarlo
     debtor_dataset: Optional[DebtorDatasetRead] = None
 
-
-    class Config:
-        orm_mode = True
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CampaignReadMinimal(BaseModel):
     id: int
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

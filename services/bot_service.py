@@ -5,6 +5,7 @@ from schemas.campaign import CampaignCreate
 from schemas.bot import BotCreate, BotUpdate
 
 
+# NOTA: Este servicio devuelve objetos ORM. La conversión a Pydantic debe hacerse en el router usando .model_validate(obj, from_attributes=True)
 def get_bot(db: Session,bot_id:int,user_id:int):
     return db.query(Bot).filter(Bot.id == bot_id, Bot.user_id == user_id).first()
 

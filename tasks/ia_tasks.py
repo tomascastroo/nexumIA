@@ -33,7 +33,7 @@ def process_incoming_message(phone: str, body: str):
     try:
         # Usar API unificada para continuar conversación
         update = continue_conversation(phone, body)
-        response_text = update.get("response") if isinstance(update, dict) else None
+        response_text = update.response if hasattr(update, "response") else None
         if not response_text:
             response_text = "Gracias, recibimos tu mensaje. Te responderemos pronto."
         send_whatsapp_message(f"whatsapp:{phone}", response_text)

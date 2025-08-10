@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
 
 
@@ -13,17 +13,24 @@ class UserOut(UserBase):
     id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
-class Token(BaseModel):
+class UserResponse(BaseModel):
+    id: int
+    email: EmailStr
+    name: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class LoginResponse(BaseModel):
     access_token: str
     token_type: str
-    expires_at: int # Unix timestamp
+    expires_at: int  # o str si prefieres timestamp como string
+    user: UserResponse
 
 class TokenData(BaseModel):
     id: Optional[int] = None

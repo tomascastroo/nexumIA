@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Debtors from './pages/Debtors';
+import Dashboard from './pages/Dashboard';
 import Estrategias from './pages/Estrategias';
 import Campaigns from './pages/Campaigns';
 import Navbar from './components/Navbar';
@@ -36,7 +37,8 @@ const App: React.FC = () => {
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Home />} />
-        <Route path="/deudores" element={<Debtors />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/deudores" element={<Debtors />} />
           <Route path="/estrategias" element={<Estrategias />} />
           <Route path="/campanas" element={<Campaigns />} />
         </Route>

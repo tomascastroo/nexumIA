@@ -25,7 +25,7 @@ export interface DebtorSort {
 
 export async function fetchDebtors(datasetId: number, filters?: DebtorFilters, sort?: DebtorSort): Promise<Debtor[]> {
   const token = getToken();
-  let url = `${API_BASE_URL}/debtor?dataset_id=${datasetId}`;
+  let url = `${API_BASE_URL}/api/v1/debtor?dataset_id=${datasetId}`;
 
   // Add filters to URL
   if (filters) {
@@ -56,7 +56,7 @@ export async function fetchDebtors(datasetId: number, filters?: DebtorFilters, s
 
 export async function createDebtor(debtor: Omit<Debtor, 'id'>): Promise<Debtor> {
   const token = getToken();
-  const res = await fetch(`${API_BASE_URL}/debtor`, {
+  const res = await fetch(`${API_BASE_URL}/api/v1/debtor`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ export async function updateDebtor(id: number, debtor: Omit<Debtor, 'id' | 'dni'
     throw new Error('ID de deudor inválido para actualización.');
   }
   const token = getToken();
-  const res = await fetch(`${API_BASE_URL}/debtor/${id}`, {
+  const res = await fetch(`${API_BASE_URL}/api/v1/debtor/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -99,7 +99,7 @@ export async function deleteDebtor(id: number, datasetId: number): Promise<void>
     throw new Error('ID de dataset inválido para eliminación.');
   }
   const token = getToken();
-  const res = await fetch(`${API_BASE_URL}/debtor/${id}?dataset_id=${datasetId}`, {
+  const res = await fetch(`${API_BASE_URL}/api/v1/debtor/${id}?dataset_id=${datasetId}`, {
     method: 'DELETE',
     headers: token ? { 'Authorization': `Bearer ${token}` } : {},
   });

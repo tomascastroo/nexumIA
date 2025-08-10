@@ -40,7 +40,7 @@ const Campaigns: React.FC = () => {
       const [camps, dsets, strats, botsRes] = await Promise.all([
         getCampaigns(token!),
         getDebtorDatasets(),
-        getStrategies(token!),
+        getStrategies(token!), // Pass token as it's now required again
         getBots(token!),
       ]);
       setCampaigns(camps);

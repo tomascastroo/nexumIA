@@ -44,3 +44,14 @@ You don’t have to ever use `eject`. The curated feature set is suitable for sm
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
 To learn React, check out the [React documentation](https://reactjs.org/).
+
+# Frontend Docker
+
+## Build y uso
+
+```bash
+docker build -t nexum-frontend .
+docker run -p 3000:80 nexum-frontend
+```
+
+O usa el `docker-compose.yml` en la raíz del proyecto.

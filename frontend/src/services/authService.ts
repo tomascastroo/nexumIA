@@ -1,11 +1,13 @@
 const API_URL = "http://localhost:8000"; // Cambia si tu backend está en otro puerto
 
+
 export function getToken(): string | null {
   return localStorage.getItem('token');
 }
 
+
 export async function loginUser(email: string, password: string) {
-  const res = await fetch(`${API_URL}/auth/login`, {
+  const res = await fetch(`${API_URL}/api/v1/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -22,7 +24,7 @@ export async function loginUser(email: string, password: string) {
 }
 
 export async function registerUser(email: string, password: string) {
-  const res = await fetch(`${API_URL}/auth/register`, {
+  const res = await fetch(`${API_URL}/api/v1/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),

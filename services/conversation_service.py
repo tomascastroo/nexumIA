@@ -3,13 +3,11 @@ from typing import Any, Dict, Optional, List, cast
 from db.db import SessionLocal
 from models.Debtor import Debtor
 from services import openai_service
+from schemas.conversation import Conversation, ConversationUpdate
 
 # Nueva API unificada de conversación
-def start_conversation(bot_id: int, debtor_id: int, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Inicializa una conversación para un deudor y retorna su estado.
-
-    conversation_id: usamos debtor_id como identificador de conversación.
-    """
+def start_conversation(bot_id: int, debtor_id: int, context: Optional[Dict[str, Any]] = None) -> Conversation:
+    """Inicializa una conversación para un deudor y retorna su estado y el historial inicial."""
     db: Session = SessionLocal()
     try:
         debtor = db.query(Debtor).filter(Debtor.id == debtor_id).first()
@@ -20,16 +18,13 @@ def start_conversation(bot_id: int, debtor_id: int, context: Optional[Dict[str, 
             history.append({"role": "system", "content": str(context)})
         debtor.conversation_history = history
         db.commit()
-        return {"conversation_id": str(debtor_id), "history": history}
+        return Conversation(conversation_id=str(debtor_id), history=history, state=debtor.state)
     finally:
         db.close()
 
 
-def continue_conversation(conversation_id: str, message: str) -> Dict[str, Any]:
-    """Continúa una conversación existente y retorna actualización básica.
-
-    conversation_id puede ser el debtor_id (str numérico) o el phone del deudor.
-    """
+def continue_conversation(conversation_id: str, message: str) -> ConversationUpdate:
+    """Continúa una conversación existente, añade el mensaje, llama a IA y retorna la actualización."""
     db: Session = SessionLocal()
     try:
         phone: Optional[str] = None
@@ -44,11 +39,14 @@ def continue_conversation(conversation_id: str, message: str) -> Dict[str, Any]:
         if not debtor or not phone:
             raise ValueError("Conversación no encontrada para conversation_id")
 
-        # Reusar la lógica existente async de manejo de mensajes
         import asyncio
         from services.conversation_service import handle_incoming_message
         response_text = asyncio.run(handle_incoming_message(phone, message, db))
-        return {"conversation_id": conversation_id, "response": response_text}
+        # Recargar historial y estado actualizado
+        updated_debtor = db.query(Debtor).filter(Debtor.id == debtor.id).first()
+        history = updated_debtor.conversation_history if updated_debtor else []
+        state = updated_debtor.state if updated_debtor else None
+        return ConversationUpdate(conversation_id=conversation_id, response=response_text, history=history, state=state)
     finally:
         db.close()
 

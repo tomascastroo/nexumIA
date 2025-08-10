@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -31,5 +31,4 @@ class DebtorRead(BaseModel):
     debtor_dataset_id: int
     custom_data: dict
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

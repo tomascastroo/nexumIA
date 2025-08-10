@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, JSON
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, JSON, func, TIMESTAMP
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from db.db import Base
@@ -13,9 +13,14 @@ class Debtor(Base):
     conversation_history = Column(JSON, default=list)  # historial de mensajes como lista JSON
     custom_data = Column(JSON, default=dict)  # campos personalizados dinámicos en JSON
 
+    created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    ultimo_contacto = Column(DateTime, nullable=True)
+    proximo_contacto = Column(DateTime, nullable=True)
+
     user_id = Column(Integer, ForeignKey("users.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     user = relationship("User", back_populates="debtors")
     debtor_dataset = relationship("DebtorDataset", back_populates="debtors")
+    debt_payments = relationship("DebtPayment", back_populates="debtor", cascade="all, delete-orphan")

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { fetchDebtors, Debtor, createDebtor, updateDebtor, deleteDebtor, DebtorFilters, DebtorSort } from '../services/debtorService';
 import { getDebtorDatasets, DebtorDataset, uploadDebtorDataset, getDebtorCustomFields, DebtorCustomField } from '../services/debtorDatasetService';
 import DebtorModal from '../components/DebtorModal';
+import { getToken } from '../services/authService';
 
 const EditIcon = () => (
   <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 3.487a2.25 2.25 0 113.182 3.182L7.5 19.213l-4 1 1-4 12.362-12.726z" /></svg>
@@ -196,6 +197,10 @@ const Debtors: React.FC = () => {
     setUploadLoading(true);
     setUploadError('');
     try {
+      const token = getToken();
+      if (!token) {
+        throw new Error("Token de autenticación no encontrado.");
+      }
       await uploadDebtorDataset(selectedFile, newDatasetName);
       setFileUploadModalOpen(false);
       setNewDatasetName('');
@@ -426,7 +431,10 @@ const Debtors: React.FC = () => {
                 Cancelar
               </button>
               <button
-                onClick={handleFileUpload}
+                onClick={() => {
+                  console.log('Botón Subir Dataset clickeado');
+                  handleFileUpload();
+                }}
                 className={`px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 ${uploadLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 disabled={uploadLoading}
               >
