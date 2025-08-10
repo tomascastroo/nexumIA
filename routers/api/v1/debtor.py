@@ -62,7 +62,7 @@ async def get_debtors(
     min_amount: Optional[float] = Query(None),
     max_amount: Optional[float] = Query(None),
     sort_by: Optional[str] = Query(None),
-    sort_direction: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    sort_direction: Optional[str] = Query(None, pattern="^(asc|desc)$"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

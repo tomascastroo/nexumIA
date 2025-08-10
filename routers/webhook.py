@@ -3,7 +3,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 from db.db import SessionLocal
 from models.Debtor import Debtor 
 from services.debtor_service import update_state
-from services.openai_service import generate_openai_response_sync
+from services.openai_service import generate_response_async, get_task_result
 import json
 from tasks.ia_tasks import process_incoming_message
 from typing import List, Dict, Any, cast

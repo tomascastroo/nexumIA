@@ -34,7 +34,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     record_security_event("user_registered", ip_address="-")
     return UserOut.model_validate(db_user, from_attributes=True)
 
-@router.post("/login", response_model=LoginResponse, dependencies=[Depends(RateLimiter(times=5, seconds=60))])
+@router.post("/login", response_model=LoginResponse)
 def login(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if not db_user or not verify_password(user.password, str(db_user.hashed_password)):
