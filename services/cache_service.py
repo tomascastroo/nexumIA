@@ -42,12 +42,8 @@ class RedisCache:
     async def _init(self):
         redis_url = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
         kwargs = {"encoding": "utf-8", "decode_responses": True}
-        print(f"DEBUG Redis connecting with password: {REDIS_PASSWORD!r}")  # DEBUG
         if REDIS_PASSWORD not in (None, "", "null", "None"):
             kwargs["password"] = REDIS_PASSWORD
-            print("DEBUG Redis will authenticate with password")
-        else:
-            print("DEBUG Redis connecting without password")
         self.redis = await aioredis.from_url(redis_url, **kwargs)
 
     async def get(self, key: str) -> Optional[Any]:

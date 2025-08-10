@@ -2,6 +2,9 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import json
 from services.rule_decision_service import RuleDecision
+import structlog
+
+logger = structlog.get_logger()
 
 class TraceabilityService:
     """Servicio para registrar y consultar trazabilidad de decisiones de reglas"""
@@ -73,31 +76,28 @@ class TraceabilityService:
         """Imprime un resumen de la decisión para debugging"""
         decision = log_entry['decision']
         
-        print(f"\n{'='*60}")
-        print(f"🎯 DECISIÓN DE REGLAS - {log_entry['timestamp']}")
-        print(f"{'='*60}")
-        print(f"📱 Deudor ID: {log_entry['debtor_id']}")
-        print(f"📋 Estrategia ID: {log_entry['strategy_id']}")
-        print(f"💬 Mensaje usuario: {log_entry['user_message'][:100]}...")
-        print(f"🤖 Acción decidida: {decision['action_description']}")
-        print(f"📊 Reglas aplicables: {len(decision['applicable_rules'])}")
+        logger.debug(f"🎯 DECISIÓN DE REGLAS - {log_entry['timestamp']}")
+        logger.debug(f"📱 Deudor ID: {log_entry['debtor_id']}")
+        logger.debug(f"📋 Estrategia ID: {log_entry['strategy_id']}")
+        logger.debug(f"💬 Mensaje usuario: {log_entry['user_message'][:100]}...")
+        logger.debug(f"🤖 Acción decidida: {decision['action_description']}")
+        logger.debug(f"📊 Reglas aplicables: {len(decision['applicable_rules'])}")
         
         if decision['triggered_rule']:
             rule = decision['triggered_rule']
-            print(f"🎯 Regla activada: {rule.get('name', 'Sin nombre')}")
-            print(f"   Tipo: {rule.get('rule_type', 'Desconocido')}")
-            print(f"   Prioridad: {rule.get('priority', 1)}")
-            print(f"   Estricta: {rule.get('strict', False)}")
+            logger.debug(f"🎯 Regla activada: {rule.get('name', 'Sin nombre')}")
+            logger.debug(f"📊   Tipo: {rule.get('rule_type', 'Desconocido')}")
+            logger.debug(f"📊   Prioridad: {rule.get('priority', 1)}")
+            logger.debug(f"📊   Estricta: {rule.get('strict', False)}")
         
-        print(f"🔒 Restricciones: {len(decision['restrictions'] or [])}")
-        print(f"✅ Respuestas permitidas: {len(decision['allowed_responses'] or [])}")
-        print(f"🧠 Razonamiento: {decision['reasoning']}")
+        logger.debug(f"🔒 Restricciones: {len(decision['restrictions'] or [])}")
+        logger.debug(f"✅ Respuestas permitidas: {len(decision['allowed_responses'] or [])}")
+        logger.debug(f"🧠 Razonamiento: {decision['reasoning']}")
         
         if decision['fallback_reason']:
-            print(f"⚠️  Fallback: {decision['fallback_reason']}")
+            logger.debug(f"⚠️  Fallback: {decision['fallback_reason']}")
         
-        print(f"🤖 Respuesta LLM: {log_entry['llm_response'][:100]}...")
-        print(f"{'='*60}\n")
+        logger.debug(f"🤖 Respuesta LLM: {log_entry['llm_response'][:100]}...")
     
     def get_decision_history(
         self,

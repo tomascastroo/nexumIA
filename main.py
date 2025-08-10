@@ -25,10 +25,45 @@ from routers.api.v1 import debtor as debtor_v1
 from routers.api.v1 import debtor_dataset_router as debtor_dataset_router_v1
 from routers.api.v1 import debtor_custom_field_router as debtor_custom_field_router_v1
 
+from contextlib import asynccontextmanager
+import structlog
+
+logger = structlog.get_logger()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    if os.getenv("DISABLE_RATE_LIMITER", "false").lower() != "true":
+        # Initialize Redis for rate limiting
+        REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+        REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+        REDIS_DB = int(os.getenv("REDIS_DB", 0))
+        REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
+        # Validar que REDIS_PORT y REDIS_DB no contengan caracteres inválidos
+        if not str(REDIS_PORT).isdigit():
+            raise ValueError(f"REDIS_PORT debe ser un número válido, recibido: {REDIS_PORT}")
+        if not str(REDIS_DB).isdigit():
+            raise ValueError(f"REDIS_DB debe ser un número válido, recibido: {REDIS_DB}")
+        
+        redis_url = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+        redis_kwargs = {"encoding": "utf-8", "decode_responses": True}
+        if REDIS_PASSWORD not in (None, "", "null", "None"):
+            redis_kwargs["password"] = REDIS_PASSWORD
+        redis = await aioredis.from_url(redis_url, **redis_kwargs)
+        await FastAPILimiter.init(redis)
+        scheduler.add_job(run_daily_followups, 'interval', days=1, args=[next(get_db_for_scheduler())])
+        scheduler.start()
+    
+    yield
+    
+    # Shutdown
+    scheduler.shutdown()
+
 app = FastAPI(
     title="Nexum IA - Sistema de Gestión de Cobranzas",
     description="API para gestión inteligente de deudores con IA",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 setup_cors_middleware(app)
@@ -43,27 +78,7 @@ def get_db_for_scheduler():
     finally:
         db.close()
 
-@app.on_event("startup")
-async def startup_event():
-    if os.getenv("DISABLE_RATE_LIMITER", "false").lower() == "true":
-        return
-    # Initialize Redis for rate limiting
-    REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
-    REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
-    REDIS_DB = int(os.getenv("REDIS_DB", 0))
-    REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
-    redis_url = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
-    redis_kwargs = {"encoding": "utf-8", "decode_responses": True}
-    if REDIS_PASSWORD not in (None, "", "null", "None"):
-        redis_kwargs["password"] = REDIS_PASSWORD
-    redis = await aioredis.from_url(redis_url, **redis_kwargs)
-    await FastAPILimiter.init(redis)
-    scheduler.add_job(run_daily_followups, 'interval', days=1, args=[next(get_db_for_scheduler())])
-    scheduler.start()
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    scheduler.shutdown()
 
 # Middleware para logging y métricas
 @app.middleware("http")
@@ -109,4 +124,6 @@ app.include_router(webhook.router, prefix="/webhook")
 app.include_router(metrics_router)
 app.include_router(message.router)
 
-print("CORS origins permitidos:", os.getenv("ALLOWED_ORIGINS"))
+# Log de configuración CORS (solo en desarrollo)
+if os.getenv("DEBUG", "false").lower() == "true":
+    logger.info(f"CORS origins permitidos: {os.getenv('ALLOWED_ORIGINS')}")

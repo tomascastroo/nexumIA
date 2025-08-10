@@ -4,7 +4,11 @@ from models.Debtor import Debtor
 from models.Strategy import Strategy
 from models.Campaign import Campaign
 from models.DebtorDataset import DebtorDataset
-from services.conversation_service import handle_incoming_message # Assuming this is the function to send messages
+import structlog
+
+logger = structlog.get_logger()
+# Import removed - handle_incoming_message was refactored out
+# For automated follow-up messages, use the new conversation service or WhatsApp service directly
 
 def run_daily_followups(db: Session):
     """
@@ -21,7 +25,7 @@ def run_daily_followups(db: Session):
 
     for debtor in debtors_for_followup:
         if not debtor.debtor_dataset or not debtor.debtor_dataset.campaigns:
-            print(f"Skipping debtor {debtor.id}: No associated debtor dataset or campaigns.")
+            logger.debug(f"Skipping debtor {debtor.id}: No associated debtor dataset or campaigns.")
             continue
 
         active_campaign = None
@@ -32,7 +36,7 @@ def run_daily_followups(db: Session):
                 break
 
         if not active_campaign or not active_campaign.strategy:
-            print(f"Skipping debtor {debtor.id}: No active campaign or strategy found.")
+            logger.debug(f"Skipping debtor {debtor.id}: No active campaign or strategy found.")
             continue
 
         strategy = active_campaign.strategy
@@ -51,7 +55,7 @@ def run_daily_followups(db: Session):
             
             # Send message (you might need to adapt this based on handle_incoming_message's signature)
             # For now, this is a placeholder. You'll likely need to pass appropriate message_body and profile_id.
-            print(f"Sending follow-up message to debtor {debtor.id} (phone: {debtor.phone}) with state {debtor.state}.")
+            logger.info(f"Sending follow-up message to debtor {debtor.id} (phone: {debtor.phone}) with state {debtor.state}.")
             # Assuming handle_incoming_message can be called to initiate a message from the bot side
             # This part needs careful review and potential adaptation
             # For a bot-initiated message, you might need a different service function than handle_incoming_message
@@ -66,8 +70,8 @@ def run_daily_followups(db: Session):
             db.add(debtor)
             db.commit()
             db.refresh(debtor)
-            print(f"Debtor {debtor.id} next contact scheduled for {next_contact_date}.")
+            logger.info(f"Debtor {debtor.id} next contact scheduled for {next_contact_date}.")
         else:
-            print(f"Debtor {debtor.id} with state {debtor.state} has 0 days configured for follow-up.")
+            logger.debug(f"Debtor {debtor.id} with state {debtor.state} has 0 days configured for follow-up.")
 
     db.close() 
