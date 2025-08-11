@@ -9,10 +9,13 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from services.payment_link_service import payment_link_service
 from typing import Dict, Any, List
+import pytest
+from core.logging import get_logger
+logger = get_logger(__name__)
 
 def test_payment_link_detection():
     """Prueba la detección de solicitudes de links de pago"""
-    print("🧪 Probando detección de solicitudes de links de pago...")
+    logger.info("🧪 Probando detección de solicitudes de links de pago...")
     
     test_messages = [
         "Quiero pagar mi deuda",
@@ -29,13 +32,13 @@ def test_payment_link_detection():
     
     for message in test_messages:
         is_payment_request = payment_link_service._detect_payment_link_request(message.lower())
-        print(f"  '{message}' -> {'✅ Solicita link' if is_payment_request else '❌ No solicita link'}")
+        logger.info(f"  '{message}' -> {'✅ Solicita link' if is_payment_request else '❌ No solicita link'}")
     
-    print()
+    logger.info("")
 
 def test_identity_validation():
     """Prueba la validación de identidad"""
-    print("🧪 Probando validación de identidad...")
+    logger.info("🧪 Probando validación de identidad...")
     
     # Caso 1: Deudor con datos de identidad
     debtor_data_1 = {"dni": "12345678", "email": "test@example.com", "deuda": 50000}
@@ -47,7 +50,7 @@ def test_identity_validation():
     identity_validated_1 = payment_link_service._check_identity_validation(
         conversation_history_1, debtor_data_1
     )
-    print(f"  Deudor con DNI y email -> {'✅ Identidad validada' if identity_validated_1 else '❌ Identidad no validada'}")
+    logger.info(f"  Deudor con DNI y email -> {'✅ Identidad validada' if identity_validated_1 else '❌ Identidad no validada'}")
     
     # Caso 2: Deudor sin datos de identidad
     debtor_data_2 = {"deuda": 50000}
@@ -59,7 +62,7 @@ def test_identity_validation():
     identity_validated_2 = payment_link_service._check_identity_validation(
         conversation_history_2, debtor_data_2
     )
-    print(f"  Deudor sin datos de identidad -> {'✅ Identidad validada' if identity_validated_2 else '❌ Identidad no validada'}")
+    logger.info(f"  Deudor sin datos de identidad -> {'✅ Identidad validada' if identity_validated_2 else '❌ Identidad no validada'}")
     
     # Caso 3: Deudor con validación en conversación
     debtor_data_3 = {"deuda": 50000}
@@ -71,13 +74,13 @@ def test_identity_validation():
     identity_validated_3 = payment_link_service._check_identity_validation(
         conversation_history_3, debtor_data_3
     )
-    print(f"  Deudor con validación en conversación -> {'✅ Identidad validada' if identity_validated_3 else '❌ Identidad no validada'}")
+    logger.info(f"  Deudor con validación en conversación -> {'✅ Identidad validada' if identity_validated_3 else '❌ Identidad no validada'}")
     
-    print()
+    logger.info("")
 
 def test_state_based_decisions():
     """Prueba las decisiones basadas en el estado del deudor"""
-    print("🧪 Probando decisiones basadas en estado...")
+    logger.info("🧪 Probando decisiones basadas en estado...")
     
     # Datos de prueba
     debtor_data = {"dni": "12345678", "deuda": 50000}
@@ -104,13 +107,13 @@ def test_state_based_decisions():
         )
         
         status = "✅ Generar" if should_generate else "❌ No generar"
-        print(f"  Estado {state} + '{message}' -> {status} ({reason})")
+        logger.info(f"  Estado {state} + '{message}' -> {status} ({reason})")
     
-    print()
+    logger.info("")
 
 def test_response_generation():
     """Prueba la generación de respuestas"""
-    print("🧪 Probando generación de respuestas...")
+    logger.info("🧪 Probando generación de respuestas...")
     
     debtor_data = {"deuda": 50000}
     
@@ -128,15 +131,15 @@ def test_response_generation():
             decision_data=decision_data
         )
         
-        print(f"  Estado {state}:")
-        print(f"    {response[:100]}...")
-        print()
+        logger.info(f"  Estado {state}:")
+        logger.info(f"    {response[:100]}...")
+        logger.info("")
     
-    print()
+    logger.info("")
 
 def test_payment_link_creation():
     """Prueba la creación de links de pago"""
-    print("🧪 Probando creación de links de pago...")
+    logger.info("🧪 Probando creación de links de pago...")
     
     payment_info = payment_link_service.create_payment_link(
         debtor_id=123,
@@ -145,20 +148,20 @@ def test_payment_link_creation():
         method="mock"
     )
     
-    print(f"  Link generado: {payment_info['payment_link']}")
-    print(f"  Monto solicitado: ${payment_info['amount_requested']:,.2f}")
-    print(f"  Monto final: ${payment_info['final_amount']:,.2f}")
-    print(f"  Descuento: {payment_info['discount_applied']}%")
-    print(f"  Método: {payment_info['method']}")
-    print(f"  Expira: {payment_info['expires_at']}")
-    print()
+    logger.info(f"  Link generado: {payment_info['payment_link']}")
+    logger.info(f"  Monto solicitado: ${payment_info['amount_requested']:,.2f}")
+    logger.info(f"  Monto final: ${payment_info['final_amount']:,.2f}")
+    logger.info(f"  Descuento: {payment_info['discount_applied']}%")
+    logger.info(f"  Método: {payment_info['method']}")
+    logger.info(f"  Expira: {payment_info['expires_at']}")
+    logger.info("")
 
 def test_integration_scenario():
     """Prueba un escenario completo de integración"""
-    print("🧪 Probando escenario completo de integración...")
+    logger.info("🧪 Probando escenario completo de integración...")
     
     # Escenario: Deudor VERDE solicita link de pago
-    print("📋 Escenario: Deudor VERDE solicita link de pago")
+    logger.info("📋 Escenario: Deudor VERDE solicita link de pago")
     
     debtor_data = {"dni": "12345678", "deuda": 50000}
     conversation_history = [
@@ -175,8 +178,8 @@ def test_integration_scenario():
         debtor_data=debtor_data
     )
     
-    print(f"  ¿Debe generar link? {'✅ Sí' if should_generate else '❌ No'}")
-    print(f"  Razón: {reason}")
+    logger.info(f"  ¿Debe generar link? {'✅ Sí' if should_generate else '❌ No'}")
+    logger.info(f"  Razón: {reason}")
     
     if should_generate:
         # 2. Generar respuesta
@@ -186,8 +189,8 @@ def test_integration_scenario():
             decision_data=data
         )
         
-        print(f"  Respuesta generada:")
-        print(f"    {response}")
+        logger.info(f"  Respuesta generada:")
+        logger.info(f"    {response}")
         
         # 3. Crear link de pago
         payment_info = payment_link_service.create_payment_link(
@@ -196,13 +199,13 @@ def test_integration_scenario():
             method="mock"
         )
         
-        print(f"  Link de pago creado: {payment_info['payment_link']}")
+        logger.info(f"  Link de pago creado: {payment_info['payment_link']}")
     
-    print()
+    logger.info("")
 
 def test_false_positive_detection():
     """Prueba que el sistema no genere falsos positivos"""
-    print("🧪 Probando detección de falsos positivos...")
+    logger.info("🧪 Probando detección de falsos positivos...")
     
     # Mensajes que NO deberían generar link de pago
     false_positive_messages = [
@@ -234,13 +237,13 @@ def test_false_positive_detection():
         )
         
         status = "❌ FALSO POSITIVO" if should_generate else "✅ Correcto"
-        print(f"  '{message}' -> {status} ({reason})")
+        logger.info(f"  '{message}' -> {status} ({reason})")
     
-    print()
+    logger.info("")
 
 def test_specific_payment_requests():
     """Prueba que el sistema detecte correctamente las solicitudes específicas"""
-    print("🧪 Probando detección de solicitudes específicas...")
+    logger.info("🧪 Probando detección de solicitudes específicas...")
     
     # Mensajes que SÍ deberían generar link de pago
     specific_requests = [
@@ -270,13 +273,13 @@ def test_specific_payment_requests():
         )
         
         status = "✅ Correcto" if should_generate else "❌ NO DETECTÓ"
-        print(f"  '{message}' -> {status} ({reason})")
+        logger.info(f"  '{message}' -> {status} ({reason})")
     
-    print()
+    logger.info("")
 
 def test_improved_responses():
     """Prueba las respuestas mejoradas"""
-    print("🧪 Probando respuestas mejoradas...")
+    logger.info("🧪 Probando respuestas mejoradas...")
     
     debtor_data = {"deuda": 50000}
     
@@ -287,9 +290,9 @@ def test_improved_responses():
         decision_data={"message": "Test"}
     )
     
-    print("📝 Respuesta para estado VERDE:")
-    print(response)
-    print()
+    logger.info("📝 Respuesta para estado VERDE:")
+    logger.info(response)
+    logger.info("")
     
     # Verificar que la respuesta contiene información específica
     assert "📋 Información del pago:" in response
@@ -297,13 +300,13 @@ def test_improved_responses():
     assert "⚠️ Importante:" in response
     assert "$50,000.00" in response
     
-    print("✅ Respuesta mejorada verificada correctamente")
-    print()
+    logger.info("✅ Respuesta mejorada verificada correctamente")
+    logger.info("")
 
 def main():
     """Función principal de pruebas"""
-    print("🚀 Iniciando pruebas del sistema de links de pago")
-    print("=" * 60)
+    logger.info("🚀 Iniciando pruebas del sistema de links de pago")
+    logger.info("=" * 60)
     
     try:
         test_payment_link_detection()
@@ -316,11 +319,11 @@ def main():
         test_specific_payment_requests()
         test_improved_responses()
         
-        print("✅ Todas las pruebas completadas exitosamente")
-        print("🎯 El sistema de links de pago está funcionando correctamente")
+        logger.info("✅ Todas las pruebas completadas exitosamente")
+        logger.info("🎯 El sistema de links de pago está funcionando correctamente")
         
     except Exception as e:
-        print(f"❌ Error durante las pruebas: {e}")
+        logger.error(f"❌ Error durante las pruebas: {e}")
         import traceback
         traceback.print_exc()
 

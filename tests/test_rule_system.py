@@ -8,6 +8,9 @@ import json
 from services.rule_decision_service import rule_decision_service
 from services.structured_prompt_service import structured_prompt_service
 from services.traceability_service import traceability_service
+import pytest
+from core.logging import get_logger
+logger = get_logger(__name__)
 
 class MockStrategy:
     """Mock de Strategy para pruebas"""
@@ -111,8 +114,8 @@ def create_test_conversation():
 
 def test_rule_evaluation():
     """Prueba la evaluación de reglas"""
-    print("🧪 PRUEBA DEL SISTEMA DE EVALUACIÓN DE REGLAS")
-    print("=" * 60)
+    logger.info("🧪 PRUEBA DEL SISTEMA DE EVALUACIÓN DE REGLAS")
+    logger.info("=" * 60)
     
     # Crear datos de prueba
     strategy = create_test_strategy()
@@ -120,12 +123,12 @@ def test_rule_evaluation():
     conversation_history = create_test_conversation()
     user_message = "¿Algún descuento?"
     
-    print(f"📋 Estrategia: {strategy['name']}")
-    print(f"👤 Deudor: {debtor_data['nombre']}")
-    print(f"💰 Deuda: ${debtor_data['deuda']:,.2f}")
-    print(f"🎯 Estado: {debtor_data['estado']}")
-    print(f"💬 Mensaje: {user_message}")
-    print()
+    logger.info(f"📋 Estrategia: {strategy['name']}")
+    logger.info(f"👤 Deudor: {debtor_data['nombre']}")
+    logger.info(f"💰 Deuda: ${debtor_data['deuda']:,.2f}")
+    logger.info(f"🎯 Estado: {debtor_data['estado']}")
+    logger.info(f"💬 Mensaje: {user_message}")
+    logger.info("")
     
     # Evaluar reglas
     mock_strategy = MockStrategy(strategy)
@@ -137,26 +140,26 @@ def test_rule_evaluation():
         user_message=user_message
     )
     
-    print("🎯 RESULTADO DE LA EVALUACIÓN:")
-    print(f"   Acción: {decision.action_description}")
-    print(f"   Tipo: {decision.action_type}")
-    print(f"   Reglas aplicables: {len(decision.applicable_rules)}")
+    logger.info("🎯 RESULTADO DE LA EVALUACIÓN:")
+    logger.info(f"   Acción: {decision.action_description}")
+    logger.info(f"   Tipo: {decision.action_type}")
+    logger.info(f"   Reglas aplicables: {len(decision.applicable_rules)}")
     
     if decision.triggered_rule:
         rule = decision.triggered_rule
-        print(f"   Regla activada: {rule.get('name', 'Sin nombre')}")
-        print(f"   Respuesta: {rule.get('response', '')}")
+        logger.info(f"   Regla activada: {rule.get('name', 'Sin nombre')}")
+        logger.info(f"   Respuesta: {rule.get('response', '')}")
     
-    print(f"   Restricciones: {len(decision.restrictions or [])}")
-    print(f"   Razonamiento: {decision.reasoning}")
-    print()
+    logger.info(f"   Restricciones: {len(decision.restrictions or [])}")
+    logger.info(f"   Razonamiento: {decision.reasoning}")
+    logger.info("")
     
     return decision
 
 def test_structured_prompt():
     """Prueba la generación de prompt estructurado"""
-    print("📝 PRUEBA DE GENERACIÓN DE PROMPT ESTRUCTURADO")
-    print("=" * 60)
+    logger.info("📝 PRUEBA DE GENERACIÓN DE PROMPT ESTRUCTURADO")
+    logger.info("=" * 60)
     
     strategy = create_test_strategy()
     debtor_data = create_test_debtor()
@@ -174,24 +177,24 @@ def test_structured_prompt():
         is_first_message=False
     )
     
-    print("📋 PROMPT GENERADO:")
-    print("-" * 40)
-    print(prompt_result['prompt'])
-    print("-" * 40)
-    print()
+    logger.info("📋 PROMPT GENERADO:")
+    logger.info("-" * 40)
+    logger.info(prompt_result['prompt'])
+    logger.info("-" * 40)
+    logger.info("")
     
-    print("🔍 METADATOS:")
-    print(f"   Tipo de acción: {prompt_result['action_type']}")
-    print(f"   Restricciones: {len(prompt_result['restrictions'])}")
-    print(f"   Respuestas permitidas: {len(prompt_result['allowed_responses'])}")
-    print()
+    logger.info("🔍 METADATOS:")
+    logger.info(f"   Tipo de acción: {prompt_result['action_type']}")
+    logger.info(f"   Restricciones: {len(prompt_result['restrictions'])}")
+    logger.info(f"   Respuestas permitidas: {len(prompt_result['allowed_responses'])}")
+    logger.info("")
     
     return prompt_result
 
 def test_traceability():
     """Prueba el sistema de trazabilidad"""
-    print("📊 PRUEBA DEL SISTEMA DE TRAZABILIDAD")
-    print("=" * 60)
+    logger.info("📊 PRUEBA DEL SISTEMA DE TRAZABILIDAD")
+    logger.info("=" * 60)
     
     strategy = create_test_strategy()
     debtor_data = create_test_debtor()
@@ -222,50 +225,50 @@ def test_traceability():
         debtor_data=debtor_data
     )
     
-    print("✅ Decisión registrada en trazabilidad")
-    print(f"   Timestamp: {log_entry['timestamp']}")
-    print(f"   Deudor ID: {log_entry['debtor_id']}")
-    print(f"   Estrategia ID: {log_entry['strategy_id']}")
-    print()
+    logger.info("✅ Decisión registrada en trazabilidad")
+    logger.info(f"   Timestamp: {log_entry['timestamp']}")
+    logger.info(f"   Deudor ID: {log_entry['debtor_id']}")
+    logger.info(f"   Estrategia ID: {log_entry['strategy_id']}")
+    logger.info("")
     
     # Obtener analytics
     analytics = traceability_service.get_decision_analytics()
-    print("📈 ANALYTICS:")
-    print(f"   Total decisiones: {analytics['total_decisions']}")
-    print(f"   Tipos de acción: {analytics['action_types']}")
-    print(f"   Tasa de fallback: {analytics['fallback_rate']:.1f}%")
-    print(f"   Uso de reglas estrictas: {analytics['strict_rules_usage']:.1f}%")
-    print(f"   Promedio reglas por decisión: {analytics['average_rules_per_decision']:.1f}")
-    print()
+    logger.info("📈 ANALYTICS:")
+    logger.info(f"   Total decisiones: {analytics['total_decisions']}")
+    logger.info(f"   Tipos de acción: {analytics['action_types']}")
+    logger.info(f"   Tasa de fallback: {analytics['fallback_rate']:.1f}%")
+    logger.info(f"   Uso de reglas estrictas: {analytics['strict_rules_usage']:.1f}%")
+    logger.info(f"   Promedio reglas por decisión: {analytics['average_rules_per_decision']:.1f}")
+    logger.info("")
 
 def main():
     """Función principal de prueba"""
-    print("🚀 INICIANDO PRUEBAS DEL SISTEMA DE REGLAS")
-    print("=" * 60)
-    print()
+    logger.info("🚀 INICIANDO PRUEBAS DEL SISTEMA DE REGLAS")
+    logger.info("=" * 60)
+    logger.info("")
     
     # Ejecutar pruebas
     test_rule_evaluation()
     test_structured_prompt()
     test_traceability()
     
-    print("✅ TODAS LAS PRUEBAS COMPLETADAS")
-    print("=" * 60)
-    print()
-    print("📋 RESUMEN DE MEJORAS IMPLEMENTADAS:")
-    print("1. ✅ Evaluación programática de reglas antes del LLM")
-    print("2. ✅ Decisión de acción específica basada en reglas")
-    print("3. ✅ Prompt estructurado con restricciones")
-    print("4. ✅ Trazabilidad completa de decisiones")
-    print("5. ✅ Sistema de fallback automático")
-    print("6. ✅ Analytics de decisiones")
-    print()
-    print("🎯 CASO DE PRUEBA:")
-    print("   Deudor: Tomas Castro, Estado: GRIS, Deuda: $40,000")
-    print("   Mensaje: '¿Algún descuento?'")
-    print("   Resultado: Se activa regla de descuento 25%")
-    print("   LLM: Recibe instrucciones específicas para ofrecer descuento")
-    print()
+    logger.info("✅ TODAS LAS PRUEBAS COMPLETADAS")
+    logger.info("=" * 60)
+    logger.info("")
+    logger.info("📋 RESUMEN DE MEJORAS IMPLEMENTADAS:")
+    logger.info("1. ✅ Evaluación programática de reglas antes del LLM")
+    logger.info("2. ✅ Decisión de acción específica basada en reglas")
+    logger.info("3. ✅ Prompt estructurado con restricciones")
+    logger.info("4. ✅ Trazabilidad completa de decisiones")
+    logger.info("5. ✅ Sistema de fallback automático")
+    logger.info("6. ✅ Analytics de decisiones")
+    logger.info("")
+    logger.info("🎯 CASO DE PRUEBA:")
+    logger.info("   Deudor: Tomas Castro, Estado: GRIS, Deuda: $40,000")
+    logger.info("   Mensaje: '¿Algún descuento?'")
+    logger.info("   Resultado: Se activa regla de descuento 25%")
+    logger.info("   LLM: Recibe instrucciones específicas para ofrecer descuento")
+    logger.info("")
 
 if __name__ == "__main__":
     main() 
