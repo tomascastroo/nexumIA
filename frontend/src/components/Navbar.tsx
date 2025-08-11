@@ -5,6 +5,8 @@ import { logout } from '../services/authService';
 const navLinks = [
   { to: '/', label: 'Dashboard' },
   { to: '/deudores', label: 'Deudores' },
+  { to: '/estrategias', label: 'Estrategias' },
+  { to: '/campanas', label: 'Campañas' },
 ];
 
 const Navbar: React.FC = () => {

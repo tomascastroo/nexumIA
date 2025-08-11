@@ -20,6 +20,7 @@ class Campaign(Base):
 
     bot = relationship("Bot", back_populates="campaigns")
     strategy = relationship("Strategy", back_populates="campaigns")
-    debtors = relationship("Debtor", back_populates="campaign")
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="campaigns")
+    debtor_dataset_id = Column(Integer, ForeignKey("debtor_datasets.id"), nullable=False)
+    debtor_dataset = relationship("DebtorDataset", back_populates="campaigns")

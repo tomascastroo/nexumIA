@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import campaign,debtor,strategy,bot,test_whatsapp,webhook,auth
+from routers import campaign,debtor, debtor_custom_field_router, debtor_dataset_router,strategy,bot,test_whatsapp,webhook,auth
 from middleware.cors import setup_cors
 
 app = FastAPI()
@@ -13,3 +13,5 @@ app.include_router(test_whatsapp.router,prefix="/whatsapp")
 app.include_router(webhook.router,prefix="/webhook")
 app.include_router(auth.router,prefix="/auth")
 
+app.include_router(debtor_dataset_router.router)
+app.include_router(debtor_custom_field_router.router)

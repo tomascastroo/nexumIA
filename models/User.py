@@ -16,5 +16,5 @@ class User(Base):
     debtors = relationship("Debtor", back_populates="user")
     strategies = relationship("Strategy", back_populates="user")
     bots = relationship("Bot", back_populates="user")
-    datasets = relationship("DebtorDataset", back_populates="user")
+    debtor_datasets = relationship("DebtorDataset", back_populates="user", cascade="all, delete-orphan")
 

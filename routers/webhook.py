@@ -5,6 +5,8 @@ from models.Debtor import Debtor
 from services.debtor_service import update_state
 from services.openai_service import generate_openai_response_sync
 import json
+from services.conversation_service import handle_incoming_message as handle_conversation
+from typing import List, Dict, Any, cast
 
 router = APIRouter()
 
@@ -15,57 +17,55 @@ def get_db():
     finally:
         db.close()
 
+def normalize_phone(raw_phone: str) -> str:
+    # Ensure raw_phone is a string before replacement
+    return raw_phone.replace("whatsapp:", "").replace("+", "").strip()
+
+
 @router.post("/")
 async def whatsapp_webhook(request: Request):
     form = await request.form()
-    from_number = form.get("From")  # ej: 'whatsapp:+54911xxxxxxx'
-    incoming_msg = form.get("Body")
+    raw_number_form = form.get("From")  # ej: 'whatsapp:+54911xxxxxxx'
+    incoming_msg_body = form.get("Body")
+
+    # Ensure inputs are strings, provide empty string if None
+    raw_number = str(raw_number_form) if raw_number_form is not None else ""
+    incoming_msg = str(incoming_msg_body) if incoming_msg_body is not None else ""
 
     db = next(get_db())
 
-    # Buscamos el deudor por teléfono
-    debtor = db.query(Debtor).filter(Debtor.phone == from_number.replace("whatsapp:", "")).first()
+    cleaned_number = normalize_phone(raw_number)
+    debtor = db.query(Debtor).filter(Debtor.phone == cleaned_number).first()
+
+    print(debtor) # Keep this debug print if useful
+
     if debtor is None:
-        # Si no está, crear nuevo deudor con historial vacío
-        debtor = Debtor(phone=from_number.replace("whatsapp:", ""), conversation_history=json.dumps([]))
+        # If debtor not found, create a new one (minimal creation)
+        debtor = Debtor(phone=cleaned_number, conversation_history=[]) # Use empty list for JSON default
         db.add(debtor)
         db.commit()
         db.refresh(debtor)
 
-    # Cargar historial de conversación (lista de dicts)
-    if debtor.conversation_history:
-        try:
-            history = json.loads(debtor.conversation_history)
-        except Exception:
-            history = []
-    else:
-        history = []
-
-    new_state = update_state(db,debtor.id,incoming_msg)
-    debtor.state = new_state  # Asignás el nuevo estado directamente
-    db.commit()
-
-    # Prompt base del bot (puede venir de la campaña o configuración)
-    prompt_base = "Sos un bot de cobranzas. Respondé de forma amable pero firme."
-
-
-    # ACA PODRIA AGREGAR DEBTOR Y TODOS SUS DATOS
+    # Centralize conversation handling to services/conversation_service.py
+    await handle_conversation(cleaned_number, incoming_msg, db)
     
-    # Armamos mensajes para OpenAI: prompt system + historial + nuevo mensaje user
-    messages_for_openai = [{"role": "system", "content": prompt_base}] + history + [{"role": "user", "content": incoming_msg} ]
+    # The response is now handled within handle_conversation, but Twilio expects an XML response.
+    # We need to retrieve the last assistant message from the debtor's updated history
+    # For this, we refresh the debtor object to get the latest state from the DB.
+    db.refresh(debtor) # Refresh debtor to get updated conversation_history
 
-    # Llamamos OpenAI con lista de mensajes
-    response_text = generate_openai_response_sync(messages_for_openai)
+    # Ensure conversation_history is treated as a list, as it's a JSON column
+    updated_history: List[Dict[str, Any]] = cast(List[Dict[str, Any]], debtor.conversation_history) if debtor.conversation_history is not None else []
+    response_text = "Lo siento, no pude generar una respuesta en este momento." # Default fallback
 
-    # Actualizamos historial agregando el mensaje user y respuesta assistant
-    history.append({"role": "user", "content": incoming_msg})
-    history.append({"role": "assistant", "content": response_text})
-
-    # Guardamos historial actualizado en DB (como JSON string)
-    debtor.conversation_history = json.dumps(history)
-    db.commit()
+    if updated_history and isinstance(updated_history, list):
+        last_message = updated_history[-1]
+        if last_message and 'role' in last_message and last_message['role'] == 'assistant' and 'content' in last_message:
+            response_text = last_message['content']
 
     # Respondemos por WhatsApp
     twilio_response = MessagingResponse()
     twilio_response.message(response_text)
     return Response(content=str(twilio_response), media_type="application/xml")
+
+

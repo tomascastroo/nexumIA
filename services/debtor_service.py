@@ -47,7 +47,7 @@ def delete_debtor(db: Session, debtor_id: int,user_id:int):
 def update_state(db, debtor_id, message):
     new_state = classify_state(message)
     db_debtor = db.query(Debtor).get(debtor_id)
-    db_debtor.status = new_state                # ✅ corregido
-    db_debtor.updated_status = datetime.utcnow()
+    db_debtor.state = new_state                # ✅ corregido
+    db_debtor.updated_state = datetime.utcnow()
     db.commit()
-    return new_state
+    return new_state                           # ✅ si querés devolverlo
