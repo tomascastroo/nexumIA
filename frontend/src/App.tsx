@@ -8,6 +8,7 @@ import Estrategias from './pages/Estrategias';
 import Campaigns from './pages/Campaigns';
 import Navbar from './components/Navbar';
 import './styles/global.css';
+import { isTokenExpired } from './services/authService';
 
 const Home: React.FC = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -17,7 +18,8 @@ const Home: React.FC = () => (
 
 const ProtectedRoute: React.FC = () => {
   const token = localStorage.getItem('token');
-  return token ? (
+  const expired = isTokenExpired();
+  return token && !expired ? (
     <>
       <Navbar />
       <Outlet />
