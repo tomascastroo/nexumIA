@@ -1,6 +1,4 @@
-import { API_BASE_URL } from '../shared/config';
-import { getToken } from '../services/authService';
-
+import { authFetch } from './http';
 
 export interface DebtorDataset {
   id: number;
@@ -17,39 +15,25 @@ export interface DebtorCustomField {
 }
 
 export const getDebtorDatasets = async (): Promise<DebtorDataset[]> => {
-  const token = getToken();
-  if (!token) throw new Error("No token found. Please log in.");
-
-  const response = await fetch(`${API_BASE_URL}/api/v1/debtor-datasets/`, {
+  const response = await authFetch(`/api/v1/debtor-datasets/`, {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
       'User-Agent': 'NexumIA-Frontend/1.0',
     },
   });
-
-  if (response.status === 401) {
-    throw new Error("Unauthorized. Please log in again.");
-  }
-
   if (!response.ok) {
     throw new Error(`Error fetching debtor datasets: ${response.statusText}`);
   }
   return response.json();
 };
 
-
 export const uploadDebtorDataset = async (file: File, datasetName: string): Promise<any> => {
-  const token = getToken();
   const formData = new FormData();
   formData.append('file', file);
   formData.append('dataset_name', datasetName);
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/debtor-datasets/upload-dataset/`, {
+  const response = await authFetch(`/api/v1/debtor-datasets/upload-dataset/`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
     body: formData,
   });
 
@@ -59,13 +43,10 @@ export const uploadDebtorDataset = async (file: File, datasetName: string): Prom
   return response.json();
 };
 
-
 export const getDebtorCustomFields = async (datasetId: number): Promise<DebtorCustomField[]> => {
-  const token = getToken();
-  const response = await fetch(`${API_BASE_URL}/api/v1/debtor-datasets/${datasetId}/custom-fields/`, {
+  const response = await authFetch(`/api/v1/debtor-datasets/${datasetId}/custom-fields/`, {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
     },
   });
 
@@ -81,12 +62,8 @@ export const getDebtorCustomFields = async (datasetId: number): Promise<DebtorCu
 };
 
 export const deleteDebtorDataset = async (datasetId: number): Promise<void> => {
-  const token = getToken();
-  const response = await fetch(`${API_BASE_URL}/api/v1/debtor-datasets/${datasetId}/`, {
+  const response = await authFetch(`/api/v1/debtor-datasets/${datasetId}/`, {
     method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
   });
   if (!response.ok) {
     throw new Error(`Error deleting debtor dataset: ${response.statusText}`);

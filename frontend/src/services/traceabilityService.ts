@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:8000';
+import { authFetch } from './http';
 
 export interface TraceDecision {
   timestamp: string;
@@ -31,24 +29,28 @@ export interface TraceAnalytics {
   recent_decisions: TraceDecision[];
 }
 
-export const getDecisionHistory = async (
-  token: string,
-  params: { debtor_id?: number; strategy_id?: number; limit?: number }
-): Promise<TraceDecision[]> => {
-  const res = await axios.get(`${API_URL}/traceability/decisions`, {
-    headers: { Authorization: `Bearer ${token}` },
-    params,
+function toQuery(params?: Record<string, any>): string {
+  if (!params) return '';
+  const usp = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') usp.append(k, String(v));
   });
-  return (res.data as { data: TraceDecision[] }).data;
+  const s = usp.toString();
+  return s ? `?${s}` : '';
+}
+
+export const getDecisionHistory = async (
+  params?: { debtor_id?: number; strategy_id?: number; limit?: number }
+): Promise<TraceDecision[]> => {
+  const res = await authFetch(`/traceability/decisions${toQuery(params)}`, { method: 'GET' });
+  if (!res.ok) throw new Error('Error obteniendo historial');
+  return (await res.json() as { data: TraceDecision[] }).data;
 };
 
 export const getDecisionAnalytics = async (
-  token: string,
-  params: { debtor_id?: number; strategy_id?: number }
+  params?: { debtor_id?: number; strategy_id?: number }
 ): Promise<TraceAnalytics> => {
-  const res = await axios.get(`${API_URL}/api/v1/traceability/analytics`, {
-    headers: { Authorization: `Bearer ${token}` },
-    params,
-  });
-  return (res.data as { data: TraceAnalytics }).data;
+  const res = await authFetch(`/api/v1/traceability/analytics${toQuery(params)}`, { method: 'GET' });
+  if (!res.ok) throw new Error('Error obteniendo analíticas');
+  return (await res.json() as { data: TraceAnalytics }).data;
 }; 
