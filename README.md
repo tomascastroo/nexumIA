@@ -68,19 +68,29 @@ chmod +x verify.sh
 ```
 Hace: búsqueda de secretos, black/isort/flake8/mypy (si instalados), compila Python, corre tests, valida .gitignore.
 
-## 🔐 Variables de Entorno (ejemplo)
+## 🔑 Variables de Entorno (ejemplo)
 ```env
-SECRET_KEY=...
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/nexum
-REDIS_URL=redis://localhost:6379/0
-OPENAI_API_KEY=sk-...
-TWILIO_ACCOUNT_SID=...
-TWILIO_AUTH_TOKEN=...
-TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
-RATE_LIMIT_MAX=100
-RATE_LIMIT_WINDOW=3600
-DISABLE_RATE_LIMITER=false
+# === Core Auth ===
+SECRET_KEY=CHANGE_ME
+JWT_ALG=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+
+# === API ===
+API_RATE_LIMIT=100
+API_RATE_LIMIT_WINDOW=60
+ALLOWED_ORIGINS=https://app.midominio.com
+
+# === Redis ===
+REDIS_URL=redis://redis:6379/0
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_DB=0
+
+# === Observability ===
+LOG_LEVEL=INFO
+APP_ENV=development  # development|staging|production
 ```
+> ⚠️ **Nunca subas tu archivo `.env` real al repositorio. Usa `.env.example` como plantilla segura.**
 
 ## 🧭 Frontend (React CRA)
 - Autenticación: `authFetch` añade `Authorization` y maneja 401 / expiración
