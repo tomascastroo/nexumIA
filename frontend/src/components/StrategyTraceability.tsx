@@ -12,12 +12,10 @@ const StrategyTraceability: React.FC<Props> = ({ strategyId }) => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
     setLoading(true);
     Promise.all([
-      getDecisionHistory(token, { strategy_id: strategyId, limit: 20 }),
-      getDecisionAnalytics(token, { strategy_id: strategyId })
+      getDecisionHistory({ strategy_id: strategyId, limit: 20 }),
+      getDecisionAnalytics({ strategy_id: strategyId })
     ])
       .then(([decisions, analytics]) => {
         setDecisions(decisions);
