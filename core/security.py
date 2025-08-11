@@ -8,11 +8,17 @@ from passlib.context import CryptContext
 
 load_dotenv()
 
+APP_ENV = os.getenv("APP_ENV", "development")
 SECRET_KEY = os.getenv("SECRET_KEY")
+if APP_ENV == "production" and not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY missing in production")
 if not SECRET_KEY:
     raise RuntimeError("SECRET_KEY no configurada")
 ALGORITHM = os.getenv("JWT_ALG", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+try:
+    ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+except Exception:
+    ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 _pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

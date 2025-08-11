@@ -11,8 +11,10 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from dotenv import load_dotenv
+from core.logging import get_logger
 
 load_dotenv()
+logger = get_logger(__name__)
 
 # Configurar rate limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -25,14 +27,17 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         self.rate_limit_requests = int(os.getenv("API_RATE_LIMIT", "100"))
         self.rate_limit_window = int(os.getenv("API_RATE_LIMIT_WINDOW", "60"))
         
+    def ensure_request_id(self, request: Request):
+        if not hasattr(request.state, 'request_id'):
+            request.state.request_id = str(uuid.uuid4())
+        return request.state.request_id
+
     async def dispatch(self, request: Request, call_next) -> Response:
         # Permitir preflight CORS
         if request.method == "OPTIONS":
             return await call_next(request)
-
-        # Generar request ID único
-        request_id = str(uuid.uuid4())
-        request.state.request_id = request_id
+        # Generar o asegurar request ID único
+        request_id = self.ensure_request_id(request)
         
         # Obtener IP del cliente
         client_ip = self._get_client_ip(request)
@@ -106,7 +111,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
     def _validate_security_headers(self, request: Request) -> bool:
         user_agent = request.headers.get("User-Agent", "")
         if not user_agent or len(user_agent) < 5:
-            print(f"[SECURITY] User-Agent inválido: '{user_agent}'")
+            logger.warning(f"[SECURITY] User-Agent inválido: '{user_agent}'")
             return False
 
         if request.method in ["POST", "PUT", "PATCH"]:
@@ -118,7 +123,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 or "application/x-www-form-urlencoded" in content_type
             )
             if not content_type or not allowed:
-                print(f"[SECURITY] Content-Type inválido: '{content_type}'")
+                logger.warning(f"[SECURITY] Content-Type inválido: '{content_type}'")
                 return False
 
         return True
@@ -126,6 +131,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
     
     def _add_security_headers(self, response: Response):
         """Agregar headers de seguridad a la respuesta"""
+        # Idempotente: no duplica headers
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
@@ -156,7 +162,9 @@ def setup_cors_middleware(app):
     """Configurar CORS de forma segura"""
     allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3002")
     allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
-    
+    app_env = os.getenv("APP_ENV", "development")
+    if app_env == "production" and not allowed_origins:
+        raise RuntimeError("ALLOWED_ORIGINS debe estar configurado en producción")
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,

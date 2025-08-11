@@ -25,16 +25,20 @@ def get_redis_client() -> redis.Redis:
     """Obtiene cliente Redis configurado."""
     try:
         if REDIS_URL != "redis://localhost:6379/0":
-            return redis.from_url(REDIS_URL)
+            client = redis.from_url(REDIS_URL)
         else:
-            return redis.Redis(
+            client = redis.Redis(
                 host=REDIS_HOST,
                 port=REDIS_PORT,
                 db=REDIS_DB,
                 decode_responses=True
             )
+        logger.info(f"Conexión a Redis exitosa en {REDIS_URL or REDIS_HOST}")
+        return client
     except Exception as e:
         logger.error(f"Error conectando a Redis: {e}")
+        if os.getenv("APP_ENV", "development") == "production":
+            raise RuntimeError("No se pudo conectar a Redis en producción. Verifica configuración y disponibilidad.")
         return None
 
 def get_client_ip(request: Request) -> str:
