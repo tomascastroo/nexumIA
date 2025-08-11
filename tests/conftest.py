@@ -8,6 +8,8 @@ import pytest
 os.environ.setdefault("SECRET_KEY", "test_secret_key")
 os.environ.setdefault("DATABASE_URL", "sqlite:///./test.db")
 os.environ.setdefault("DISABLE_RATE_LIMITER", "true")
+# Deshabilitar servicios externos (Twilio, etc.) durante pruebas
+os.environ.setdefault("DISABLE_EXTERNAL_SERVICES", "true")
 # Fernet key de 32 bytes en base64 urlsafe
 if not os.getenv("ENCRYPTION_KEY"):
     os.environ["ENCRYPTION_KEY"] = base64.urlsafe_b64encode(b"0" * 32).decode()
@@ -24,6 +26,7 @@ def test_env(monkeypatch):
     monkeypatch.setenv("SECRET_KEY", os.getenv("SECRET_KEY", "test_secret_key"))
     monkeypatch.setenv("DATABASE_URL", os.getenv("DATABASE_URL", "sqlite:///./test.db"))
     monkeypatch.setenv("DISABLE_RATE_LIMITER", "true")
+    monkeypatch.setenv("DISABLE_EXTERNAL_SERVICES", "true")
     
     # Fernet key debe ser 32 bytes base64 urlsafe
     key = os.getenv("ENCRYPTION_KEY") or base64.urlsafe_b64encode(b"0" * 32).decode()

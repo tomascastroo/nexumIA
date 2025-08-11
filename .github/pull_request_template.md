@@ -1,28 +1,20 @@
 ## Descripción
 
-Breve descripción del cambio y su propósito.
-
 ## Tipo de cambio
-- [ ] feat: Nueva funcionalidad
-- [ ] fix: Bug fix
-- [ ] refactor: Refactor sin cambio funcional
-- [ ] chore: Infraestructura/DevX
-- [ ] ci: Cambios de CI
-- [ ] docs: Documentación
-- [ ] test: Tests
+- [ ] feat
+- [ ] fix
+- [ ] refactor
+- [ ] test
+- [ ] docs
+- [ ] chore
 
 ## Checklist
-- [ ] Cambios atómicos (1 tópico = 1 commit) con Conventional Commits
-- [ ] Sin secretos en el código (usar variables de entorno y `.env.example`)
-- [ ] Rutas protegidas (JWT + roles donde aplique)
-- [ ] Backpressure: llamadas a proveedores en background (Celery/BackgroundTasks)
-- [ ] Logs estructurados y métricas añadidas donde corresponda
-- [ ] Tests actualizados/pasando (auth, servicios, colas)
-- [ ] CI en verde (lint, type-check, tests)
+- [ ] `./verify.sh` en verde
+- [ ] Tests agregados/actualizados
+- [ ] Sin secretos en el diff
+- [ ] Backward compatible (no rompe API)
 
-## Cómo probar
-Instrucciones para reproducir y validar.
+## Screenshots / Evidencia
 
-## Riesgos / Impacto
-Notas de compatibilidad y migraciones si aplica.
+## Notas de despliegue
 

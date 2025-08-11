@@ -11,13 +11,19 @@ DISABLE_EXTERNAL_SERVICES = os.getenv("DISABLE_EXTERNAL_SERVICES", "false").lowe
 _client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN) if (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN) else None
 
 def send_whatsapp_message(to: str, message: str) -> str:
+    # Si se ha inyectado un cliente (tests), usarlo siempre
+    if _client is not None:
+        msg = _client.messages.create(
+            body=message,
+            from_=TWILIO_WHATSAPP_NUMBER,
+            to=to
+        )
+        return msg.sid
     # En tests/CI o sin credenciales válidas, no llamar a Twilio
-    if DISABLE_EXTERNAL_SERVICES or _client is None:
+    if DISABLE_EXTERNAL_SERVICES or not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN):
         return "mocked-twilio-sid"
-    msg = _client.messages.create(
-        body=message,
-        from_=TWILIO_WHATSAPP_NUMBER,
-        to=to
-    )
+    # Fallback defensivo (no debería alcanzarse si _client se creó correctamente)
+    client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+    msg = client.messages.create(body=message, from_=TWILIO_WHATSAPP_NUMBER, to=to)
     return msg.sid
 
