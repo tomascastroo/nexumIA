@@ -41,7 +41,6 @@ jobs:
           --health-retries 5
 
     env:
-      # App
       APP_ENV: test
       ENVIRONMENT: test
       SECRET_KEY: dummy_secret_key_change_me
@@ -50,13 +49,13 @@ jobs:
       ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000
       ENABLE_METRICS: "true"
 
-      # Providers (dummy; CI no debe llamar externos)
+      # Providers dummy
       OPENAI_API_KEY: dummy
       TWILIO_ACCOUNT_SID: dummy
       TWILIO_AUTH_TOKEN: dummy
       TWILIO_WHATSAPP_NUMBER: whatsapp:+14155238886
 
-      # Flags para evitar integraciones reales en CI
+      # Flags para CI
       CI: "true"
       DISABLE_EXTERNAL_SERVICES: "true"
       TWILIO_DISABLE: "true"
@@ -66,25 +65,15 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nexum
       REDIS_URL: redis://localhost:6379/0
 
-      # flags para evitar integraciones reales en CI
-      CI: "true"
-      DISABLE_EXTERNAL_SERVICES: "true"
-      TWILIO_DISABLE: "true"
-      OPENAI_DISABLE: "true"
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-
-      - name: Upgrade pip tooling
-        run: python -m pip install --upgrade pip setuptools wheel
 
       - name: Upgrade pip tooling
         run: python -m pip install --upgrade pip setuptools wheel
@@ -97,7 +86,6 @@ jobs:
       - name: Wait for Postgres
         run: |
           for i in {1..15}; do
-          for i in {1..15}; do
             pg_isready -h localhost -p 5432 -U postgres && break
             sleep 2
           done
@@ -109,14 +97,23 @@ jobs:
             alembic upgrade head || echo "Skipping migrations if not configured"
           fi
 
-      - name: Lint (ruff - critical rules)
-        run: ruff check --select E9,F63,F7,F82 .
-      - name: Lint (ruff - critical rules)
-        run: ruff check --select E9,F63,F7,F82 .
+      - name: Lint (ruff - all rules)
+        run: ruff check .
 
       - name: Type check (mypy, ignore missing imports)
         run: mypy --ignore-missing-imports --install-types --non-interactive || true
-        run: mypy --ignore-missing-imports --install-types --non-interactive || true
+
+      - name: SAST (bandit)
+        run: bandit -r . -x tests
 
       - name: Run tests (skip external/integration)
         run: pytest -q --maxfail=1 --disable-warnings -k "not twilio and not external and not integration"
+
+      - name: Run tests with coverage
+        run: pytest --cov=.
+
+      - name: Build frontend
+        run: |
+          cd frontend && npm ci && npm run build
+
+          
