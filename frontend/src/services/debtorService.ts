@@ -1,5 +1,4 @@
-import { API_BASE_URL } from '../shared/config';
-import { getToken } from './authService';
+import { authFetch } from './http';
 
 export interface Debtor {
   id?: number;
@@ -10,58 +9,45 @@ export interface Debtor {
 }
 
 export interface DebtorFilters {
-  search?: string; // Generic search term for all fields
-  state?: string; // Filter by state
-  min_amount?: number; // Filter by minimum debt amount
-  max_amount?: number; // Filter by maximum debt amount
-  // Add more filter fields as needed for custom data
-  [key: string]: any; // Allow for dynamic custom data filters
+  search?: string;
+  state?: string;
+  min_amount?: number;
+  max_amount?: number;
+  [key: string]: any;
 }
 
 export interface DebtorSort {
-  field: string; // The field to sort by (e.g., 'phone', 'name', 'deuda')
-  direction: 'asc' | 'desc'; // Sort direction
+  field: string;
+  direction: 'asc' | 'desc';
 }
 
 export async function fetchDebtors(datasetId: number, filters?: DebtorFilters, sort?: DebtorSort): Promise<Debtor[]> {
-  const token = getToken();
-  let url = `${API_BASE_URL}/debtor?dataset_id=${datasetId}`;
-
-  // Add filters to URL
+  let url = `/api/v1/debtor?dataset_id=${datasetId}`;
   if (filters) {
     for (const key in filters) {
-      if (filters.hasOwnProperty(key) && filters[key] !== undefined && filters[key] !== null && filters[key] !== '') {
-        url += `&${key}=${encodeURIComponent(filters[key])}`;
+      if (Object.prototype.hasOwnProperty.call(filters, key)) {
+        const val = (filters as any)[key];
+        if (val !== undefined && val !== null && val !== '') {
+          url += `&${encodeURIComponent(key)}=${encodeURIComponent(val)}`;
+        }
       }
     }
   }
-
-  // Add sort to URL
   if (sort) {
     url += `&sort_by=${encodeURIComponent(sort.field)}&sort_direction=${encodeURIComponent(sort.direction)}`;
   }
-
-  console.log('debtorService - Fetching debtors from URL:', url);
-
-  const res = await fetch(url, {
-    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-  });
+  const res = await authFetch(url);
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({ detail: 'Error desconocido al obtener deudores.' }));
-    console.error('debtorService - Error response:', errorData);
     throw new Error(errorData.detail || 'No se pudieron obtener los deudores');
   }
   return res.json();
 }
 
 export async function createDebtor(debtor: Omit<Debtor, 'id'>): Promise<Debtor> {
-  const token = getToken();
-  const res = await fetch(`${API_BASE_URL}/debtor`, {
+  const res = await authFetch(`/api/v1/debtor`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(debtor),
   });
   if (!res.ok) {
@@ -72,16 +58,9 @@ export async function createDebtor(debtor: Omit<Debtor, 'id'>): Promise<Debtor> 
 }
 
 export async function updateDebtor(id: number, debtor: Omit<Debtor, 'id' | 'dni'>): Promise<Debtor> {
-  if (typeof id !== 'number' || isNaN(id)) {
-    throw new Error('ID de deudor inválido para actualización.');
-  }
-  const token = getToken();
-  const res = await fetch(`${API_BASE_URL}/debtor/${id}`, {
+  const res = await authFetch(`/api/v1/debtor/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(debtor),
   });
   if (!res.ok) {
@@ -92,17 +71,7 @@ export async function updateDebtor(id: number, debtor: Omit<Debtor, 'id' | 'dni'
 }
 
 export async function deleteDebtor(id: number, datasetId: number): Promise<void> {
-  if (typeof id !== 'number' || isNaN(id)) {
-    throw new Error('ID de deudor inválido para eliminación.');
-  }
-  if (typeof datasetId !== 'number' || isNaN(datasetId)) {
-    throw new Error('ID de dataset inválido para eliminación.');
-  }
-  const token = getToken();
-  const res = await fetch(`${API_BASE_URL}/debtor/${id}?dataset_id=${datasetId}`, {
-    method: 'DELETE',
-    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-  });
+  const res = await authFetch(`/api/v1/debtor/${id}?dataset_id=${datasetId}`, { method: 'DELETE' });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({ detail: 'Error desconocido en la eliminación.' }));
     throw new Error(errorData.detail || 'No se pudo eliminar el deudor.');

@@ -1,5 +1,4 @@
-import { API_BASE_URL } from '../shared/config';
-import { getToken } from './authService';
+import { authFetch } from './http';
 
 export interface DebtorDataset {
   id: number;
@@ -16,14 +15,12 @@ export interface DebtorCustomField {
 }
 
 export const getDebtorDatasets = async (): Promise<DebtorDataset[]> => {
-  const token = getToken();
-  const response = await fetch(`${API_BASE_URL}/debtor-datasets/`, {
+  const response = await authFetch(`/api/v1/debtor-datasets/`, {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      'User-Agent': 'NexumIA-Frontend/1.0',
     },
   });
-
   if (!response.ok) {
     throw new Error(`Error fetching debtor datasets: ${response.statusText}`);
   }
@@ -31,16 +28,12 @@ export const getDebtorDatasets = async (): Promise<DebtorDataset[]> => {
 };
 
 export const uploadDebtorDataset = async (file: File, datasetName: string): Promise<any> => {
-  const token = getToken();
   const formData = new FormData();
   formData.append('file', file);
   formData.append('dataset_name', datasetName);
 
-  const response = await fetch(`${API_BASE_URL}/debtor-datasets/upload-dataset/`, {
+  const response = await authFetch(`/api/v1/debtor-datasets/upload-dataset/`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
     body: formData,
   });
 
@@ -51,11 +44,9 @@ export const uploadDebtorDataset = async (file: File, datasetName: string): Prom
 };
 
 export const getDebtorCustomFields = async (datasetId: number): Promise<DebtorCustomField[]> => {
-  const token = getToken();
-  const response = await fetch(`${API_BASE_URL}/debtor-datasets/${datasetId}/custom-fields/`, {
+  const response = await authFetch(`/api/v1/debtor-datasets/${datasetId}/custom-fields/`, {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
     },
   });
 
@@ -68,4 +59,13 @@ export const getDebtorCustomFields = async (datasetId: number): Promise<DebtorCu
     throw new Error(`Error fetching debtor custom fields: ${response.statusText}`);
   }
   return response.json();
+};
+
+export const deleteDebtorDataset = async (datasetId: number): Promise<void> => {
+  const response = await authFetch(`/api/v1/debtor-datasets/${datasetId}/`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error(`Error deleting debtor dataset: ${response.statusText}`);
+  }
 }; 

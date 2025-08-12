@@ -1,19 +1,22 @@
+"""
+Este servicio espera que todas las funciones reciban la sesión de base de datos (db: Session) inyectada por el router vía Depends(get_db). No crear la sesión internamente.
+"""
 import json
-from pytest import Session
+from sqlalchemy.orm import Session
 from models.Bot import Bot
 from models.Debtor import Debtor
 from models.Strategy import Strategy
 from models.Campaign import Campaign
-from db.db import SessionLocal
 from models.DebtorDataset import DebtorDataset
 
 from services.whatsapp_service import send_whatsapp_message
-from services.openai_service import generate_openai_first_message_sync
+from services.openai_service import generate_first_message_async, get_task_result
 from schemas.campaign import CampaignCreate,CampaignUpdate,CampaignRead
 from fastapi import HTTPException
 import re
 import difflib
 
+# NOTA: Este servicio devuelve objetos ORM. La conversión a Pydantic debe hacerse en el router usando .model_validate(obj, from_attributes=True)
 def create_campaign(db: Session, campaign: CampaignCreate, user_id: int):
     strategy = db.query(Strategy).filter(Strategy.id == campaign.strategy_id, Strategy.user_id == user_id).first()
     if not strategy:
@@ -110,7 +113,12 @@ def throw_campaign(db: Session, campaign_id: int, user_id: int):
         raise HTTPException(status_code=404, detail="Campaign not found")
 
     initial_prompt = campaign.strategy.initial_prompt
-    message = generate_openai_first_message_sync(initial_prompt, "gpt-4o-mini")
+    # Encolar la generación del primer mensaje en Celery
+    task_id = generate_first_message_async(initial_prompt, "gpt-4o-mini")
+    # Esperar el resultado (en producción esto podría ser asíncrono)
+    message = get_task_result(task_id, timeout=30)
+    if message is None:
+        message = "Error generando mensaje inicial"
 
     # Tomar los deudores del dataset asignado a la campaña
     debtors = db.query(Debtor).filter(Debtor.debtor_dataset_id == campaign.debtor_dataset_id, Debtor.user_id == user_id).all()

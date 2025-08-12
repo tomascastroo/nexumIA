@@ -33,7 +33,8 @@ def read_custom_fields(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return debtor_custom_field_service.get_custom_fields(db, dataset_id, user_id=current_user.id, skip=skip, limit=limit)
+    result = debtor_custom_field_service.get_custom_fields(db, dataset_id, user_id=current_user.id, skip=skip, limit=limit)
+    return [DebtorCustomFieldRead.model_validate(f, from_attributes=True) for f in result]
 
 @router.get("/{field_id}", response_model=DebtorCustomFieldRead)
 def read_custom_field(

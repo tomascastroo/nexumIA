@@ -1,0 +1,136 @@
+version: '3.9'
+
+services:
+  backend:
+    build: .
+    container_name: nexum-backend
+    env_file:
+      - env.example
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - nexum-net
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: nexum-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    networks:
+      - nexum-net
+
+  db:
+    image: postgres:15-alpine
+    container_name: nexum-db
+    restart: always
+    environment:
+      POSTGRES_USER: nexum
+      POSTGRES_PASSWORD: nexum
+      POSTGRES_DB: nexum
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexum"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - nexum-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexum-redis
+    ports:
+      - "16379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - nexum-net
+
+  celery_worker:
+    build: .
+    container_name: nexum-celery-worker
+    command: celery -A services worker --loglevel=info
+    env_file:
+      - env.example
+    depends_on:
+      - backend
+      - redis
+      - db
+    networks:
+      - nexum-net
+
+  celery_beat:
+    build: .
+    container_name: nexum-celery-beat
+    command: celery -A services beat --loglevel=info
+    env_file:
+      - env.example
+    depends_on:
+      - backend
+      - redis
+      - db
+    networks:
+      - nexum-net
+
+  flower:
+    build: .
+    container_name: nexum-flower
+    command: celery -A tasks.celery_app flower --broker=redis://nexum-redis:6379/1 --port=5555
+    env_file:
+      - env.example
+    depends_on:
+      - redis
+      - celery_worker
+    ports:
+      - "5555:5555"
+    networks:
+      - nexum-net
+
+  prometheus:
+    image: prom/prometheus
+    container_name: nexum-prometheus
+    volumes:
+      - ./docs/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - nexum-net
+
+  grafana:
+    image: grafana/grafana
+    container_name: nexum-grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - nexum-net
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  nexum-net:
+    driver: bridge 

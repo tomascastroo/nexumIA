@@ -1,80 +1,91 @@
 import axios from 'axios';
 
+const API_URL = "http://localhost:8000";
+
+export interface ConditionalRule {
+  condition: string;
+  response: string;
+  retry_in_days?: number | null;
+  close_case?: boolean;
+  escalate_to_human?: boolean;
+}
+
+export interface AdvancedConditionalRule {
+  name: string;
+  conditions: {
+    operator: 'AND' | 'OR';
+    conditions: any[];
+  };
+  response: string;
+  retry_in_days?: number;
+  escalate_to_human: boolean;
+  close_case: boolean;
+  priority: number;
+}
+
+export interface EvaluableRule {
+  name: string;
+  condition: string;
+  response: string;
+  strict: boolean;
+  priority: number;
+  enabled: boolean;
+}
+
+export interface StateRules {
+  prompt?: string;
+  rules: ConditionalRule[];
+  advanced_rules: AdvancedConditionalRule[];
+}
+
 export interface Strategy {
   id: number;
   name: string;
   initial_prompt: string;
   rules_by_state: {
-    [key: string]: {
-      prompt: string;
-      condicionales: Array<{
-        si: string;
-        accion: string;
-      }>;
-    };
-  } | null;
+    [state: string]: StateRules;
+  };
+  evaluable_rules: EvaluableRule[];
+  strict_mode: boolean;
+  fallback_prompt: string;
   created_at: string;
   updated_at: string;
 }
 
-const API_URL = "http://localhost:8000";
-
-console.log('API_URL:', API_URL);
-
 export const createStrategy = async (strategyData: any, token: string) => {
-  try {
-    const response = await axios.post<Strategy>(`${API_URL}/strategy/`, strategyData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error creating strategy:', error);
-    throw error;
-  }
+  const response = await axios.post<Strategy>(`${API_URL}/api/v1/strategy/`, strategyData, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  return response.data;
 };
 
 export const getStrategies = async (token: string): Promise<Strategy[]> => {
-  try {
-    const response = await axios.get<Strategy[]>(`${API_URL}/strategy/`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching strategies:', error);
-    throw error;
-  }
+  const response = await axios.get<Strategy[]>(`${API_URL}/api/v1/strategy/`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return response.data;
 };
 
 export const updateStrategy = async (strategyId: number, strategyData: any, token: string) => {
-  try {
-    const response = await axios.post<Strategy>(`${API_URL}/strategy/${strategyId}`, strategyData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error updating strategy:', error);
-    throw error;
-  }
+  const response = await axios.post<Strategy>(`${API_URL}/api/v1/strategy/${strategyId}`, strategyData, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  return response.data;
 };
 
 export const deleteStrategy = async (strategyId: number, token: string) => {
-  try {
-    const response = await axios.delete<Strategy>(`${API_URL}/strategy/${strategyId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting strategy:', error);
-    throw error;
-  }
+  const response = await axios.delete<Strategy>(`${API_URL}/strategies/${strategyId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return response.data;
 }; 

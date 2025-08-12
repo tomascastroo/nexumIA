@@ -24,21 +24,21 @@ export interface Bot {
 }
 
 export const getBots = async (token: string): Promise<Bot[]> => {
-  const response = await axios.get<Bot[]>(`${API_BASE_URL}/bot/`, {
+  const response = await axios.get<Bot[]>(`${API_BASE_URL}/api/v1/bot/`, {
     headers: { 'Authorization': `Bearer ${token}` },
   });
   return response.data;
 };
 
 export const getCampaigns = async (token: string): Promise<Campaign[]> => {
-  const response = await axios.get<Campaign[]>(`${API_BASE_URL}/campaign/`, {
+  const response = await axios.get<Campaign[]>(`${API_BASE_URL}/api/v1/campaign/`, {
     headers: { 'Authorization': `Bearer ${token}` },
   });
   return response.data;
 };
 
 export const createCampaign = async (campaignData: any, token: string) => {
-  const response = await axios.post(`${API_BASE_URL}/campaign/`, campaignData, {
+  const response = await axios.post(`${API_BASE_URL}/api/v1/campaign/`, campaignData, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ export const createCampaign = async (campaignData: any, token: string) => {
 };
 
 export const updateCampaign = async (campaignId: number, campaignData: any, token: string) => {
-  const response = await axios.put(`${API_BASE_URL}/campaign/${campaignId}`, campaignData, {
+  const response = await axios.put(`${API_BASE_URL}/api/v1/campaign/${campaignId}`, campaignData, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -65,7 +65,7 @@ export const deleteCampaign = async (campaignId: number, token: string) => {
 };
 
 export const launchCampaign = async (campaignId: number, token: string) => {
-  const response = await axios.get(`${API_BASE_URL}/campaign/throw-campaign/${campaignId}`, {
+  const response = await axios.get(`${API_BASE_URL}/api/v1/campaign/throw-campaign/${campaignId}`, {
     headers: { 'Authorization': `Bearer ${token}` },
   });
   return response.data;

@@ -4,6 +4,7 @@ from models.DebtorDataset import DebtorDataset
 from models.DebtorCustomField import DebtorCustomField
 from schemas.debtor_custom_field import DebtorCustomFieldCreate, DebtorCustomFieldUpdate
 
+# NOTA: Este servicio devuelve objetos ORM. La conversión a Pydantic debe hacerse en el router usando .model_validate(obj, from_attributes=True)
 def get_custom_field(db: Session, field_id: int, user_id: int):
     # Necesitamos join para validar user_id a través del dataset
     return db.query(DebtorCustomField).join("debtor_dataset").filter(
@@ -11,6 +12,7 @@ def get_custom_field(db: Session, field_id: int, user_id: int):
         DebtorCustomField.debtor_dataset.has(user_id=user_id)
     ).first()
 
+# NOTA: Este servicio devuelve objetos ORM. La conversión a Pydantic debe hacerse en el router usando .model_validate(obj, from_attributes=True)
 def get_custom_fields(db: Session, debtor_dataset_id: int, user_id: int, skip: int = 0, limit: int = 100):
     return db.query(DebtorCustomField).filter(
         DebtorCustomField.debtor_dataset_id == debtor_dataset_id,

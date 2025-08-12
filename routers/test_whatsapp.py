@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response
-from pytest import Session
+from sqlalchemy.orm import Session
 from twilio.twiml.messaging_response import MessagingResponse
+import sys
+sys.path.append('.')
 from db.db import SessionLocal
 from routers.bot import get_db
 from services.whatsapp_service import send_whatsapp_message
-from services.openai_service import generate_openai_response_sync
+from services.openai_service import generate_response_async, get_task_result
 import asyncio
 
 
@@ -21,11 +23,15 @@ def get_db():
 async def send_whatsapp():
     to = "whatsapp:+61415837604"
 
-    loop = asyncio.get_event_loop()
-    message = await loop.run_in_executor(
-        None,
-        lambda: generate_openai_response_sync("sos un bot de cobranzas que deb convencer a que pague", "gpt-4o-mini")
+    # Encolar la generación de respuesta en Celery
+    task_id = generate_response_async(
+        [{"role": "user", "content": "sos un bot de cobranzas que deb convencer a que pague"}], 
+        "gpt-4o-mini"
     )
+    # Esperar el resultado (en producción esto podría ser asíncrono)
+    message = get_task_result(task_id, timeout=30)
+    if message is None:
+        message = "Error generando respuesta"
 
     try:
         message_sid = send_whatsapp_message(to, message)

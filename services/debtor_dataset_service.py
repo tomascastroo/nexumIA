@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from models.DebtorDataset import DebtorDataset
 from schemas.debtor_dataset import DebtorDatasetCreate, DebtorDatasetUpdate
 
+# NOTA: Este servicio devuelve objetos ORM. La conversión a Pydantic debe hacerse en el router usando .model_validate(obj, from_attributes=True)
 def get_debtor_dataset(db: Session, dataset_id: int, user_id: int):
     return db.query(DebtorDataset).filter(DebtorDataset.id == dataset_id, DebtorDataset.user_id == user_id).first()
 

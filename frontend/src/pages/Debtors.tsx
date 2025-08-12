@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { fetchDebtors, Debtor, createDebtor, updateDebtor, deleteDebtor, DebtorFilters, DebtorSort } from '../services/debtorService';
 import { getDebtorDatasets, DebtorDataset, uploadDebtorDataset, getDebtorCustomFields, DebtorCustomField } from '../services/debtorDatasetService';
 import DebtorModal from '../components/DebtorModal';
+import { getToken } from '../services/authService';
 
 const EditIcon = () => (
   <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 3.487a2.25 2.25 0 113.182 3.182L7.5 19.213l-4 1 1-4 12.362-12.726z" /></svg>
@@ -51,8 +52,10 @@ const Debtors: React.FC = () => {
   const [uploadError, setUploadError] = useState('');
   const [currentFilters, setCurrentFilters] = useState<DebtorFilters>({});
   const [currentSort, setCurrentSort] = useState<DebtorSort | undefined>(undefined);
+  const [csvPreview, setCsvPreview] = useState<string[][]>([]);
+  const [csvValid, setCsvValid] = useState<boolean | null>(null);
 
-  const loadDebtors = async (datasetId: number | null) => {
+  const loadDebtors = useCallback(async (datasetId: number | null) => {
     console.log('Debtors - Cargando deudores para dataset ID:', datasetId);
     setLoading(true);
     setError('');
@@ -81,7 +84,7 @@ const Debtors: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentFilters, currentSort]);
 
   useEffect(() => {
     const loadDatasets = async () => {
@@ -114,7 +117,7 @@ const Debtors: React.FC = () => {
       setDebtors([]);
       setCustomFields([]);
     }
-  }, [selectedDatasetId, currentFilters, currentSort]);
+  }, [selectedDatasetId, currentFilters, currentSort, loadDebtors]);
 
   const handleAdd = async (debtor: Omit<Debtor, 'id'>) => {
     console.log('Debtors - Intentando agregar deudor:', debtor);
@@ -196,6 +199,10 @@ const Debtors: React.FC = () => {
     setUploadLoading(true);
     setUploadError('');
     try {
+      const token = getToken();
+      if (!token) {
+        throw new Error("Token de autenticación no encontrado.");
+      }
       await uploadDebtorDataset(selectedFile, newDatasetName);
       setFileUploadModalOpen(false);
       setNewDatasetName('');
@@ -214,6 +221,35 @@ const Debtors: React.FC = () => {
     } finally {
       setUploadLoading(false);
     }
+  };
+
+  const handleFileChange = (file: File | null) => {
+    setSelectedFile(file);
+    setCsvPreview([]);
+    setCsvValid(null);
+    if (!file) return;
+    if (!file.name.endsWith('.csv')) {
+      setUploadError('Solo se permiten archivos .csv');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result || '');
+      const lines = text.split(/\r?\n/).filter(Boolean).slice(0, 6);
+      const rows = lines.map(l => l.split(',').map(c => c.trim()));
+      setCsvPreview(rows);
+      // Validación básica: debe contener columnas phone y state
+      const headers = rows[0] || [];
+      const hasPhone = headers.some(h => h.toLowerCase() === 'phone');
+      const hasState = headers.some(h => h.toLowerCase() === 'state' || h.toLowerCase() === 'estado');
+      setCsvValid(hasPhone && hasState);
+      if (!hasPhone || !hasState) {
+        setUploadError('El CSV debe contener columnas phone y state');
+      } else {
+        setUploadError('');
+      }
+    };
+    reader.readAsText(file);
   };
 
   const standardHeaders = [
@@ -413,10 +449,31 @@ const Debtors: React.FC = () => {
               <input
                 id="file-upload"
                 type="file"
-                onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)}
-                className="hidden" // Hide the default file input
+                onChange={(e) => handleFileChange(e.target.files ? e.target.files[0] : null)}
+                className="hidden"
               />
             </div>
+            {csvPreview.length > 0 && (
+              <div className="mt-3 border border-gray-200 rounded-md overflow-hidden">
+                <div className="bg-gray-50 px-3 py-2 text-sm text-gray-700">Preview (primeras 5 filas)</div>
+                <div className="max-h-48 overflow-auto">
+                  <table className="min-w-full text-xs">
+                    <tbody>
+                      {csvPreview.map((row, idx) => (
+                        <tr key={idx} className={idx === 0 ? 'bg-white font-semibold' : 'bg-white'}>
+                          {row.map((cell, cidx) => (
+                            <td key={cidx} className="px-3 py-1 border-b border-gray-100 whitespace-nowrap">{cell}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+            {csvValid === false && (
+              <div className="text-red-600 text-sm">El CSV carece de columnas requeridas (phone, state).</div>
+            )}
             {uploadError && <div className="text-red-600 text-sm">{uploadError}</div>}
             <div className="flex gap-4 justify-end mt-4">
               <button
@@ -426,9 +483,12 @@ const Debtors: React.FC = () => {
                 Cancelar
               </button>
               <button
-                onClick={handleFileUpload}
+                onClick={() => {
+                  console.log('Botón Subir Dataset clickeado');
+                  handleFileUpload();
+                }}
                 className={`px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 ${uploadLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={uploadLoading}
+                disabled={uploadLoading || csvValid === false}
               >
                 {uploadLoading ? 'Subiendo...' : 'Subir Dataset'}
               </button>

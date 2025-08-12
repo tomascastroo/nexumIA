@@ -3,10 +3,12 @@ from twilio.twiml.messaging_response import MessagingResponse
 from db.db import SessionLocal
 from models.Debtor import Debtor 
 from services.debtor_service import update_state
-from services.openai_service import generate_openai_response_sync
+from services.openai_service import generate_response_async, get_task_result
 import json
-from services.conversation_service import handle_incoming_message as handle_conversation
+from tasks.ia_tasks import process_incoming_message
 from typing import List, Dict, Any, cast
+from core.logger import log_business_event
+import os
 
 router = APIRouter()
 
@@ -37,35 +39,25 @@ async def whatsapp_webhook(request: Request):
     cleaned_number = normalize_phone(raw_number)
     debtor = db.query(Debtor).filter(Debtor.phone == cleaned_number).first()
 
-    print(debtor) # Keep this debug print if useful
-
     if debtor is None:
         # If debtor not found, create a new one (minimal creation)
-        debtor = Debtor(phone=cleaned_number, conversation_history=[]) # Use empty list for JSON default
+        default_dataset_id = int(os.getenv("DEFAULT_DATASET_ID", "1"))
+        debtor = Debtor(
+            phone=cleaned_number,
+            conversation_history=[],
+            debtor_dataset_id=default_dataset_id
+        )
         db.add(debtor)
         db.commit()
         db.refresh(debtor)
 
-    # Centralize conversation handling to services/conversation_service.py
-    await handle_conversation(cleaned_number, incoming_msg, db)
+    # Encolar el procesamiento para backpressure
+    process_incoming_message.delay(cleaned_number, incoming_msg)
+    log_business_event("webhook_enqueued", details={"phone": cleaned_number})
     
-    # The response is now handled within handle_conversation, but Twilio expects an XML response.
-    # We need to retrieve the last assistant message from the debtor's updated history
-    # For this, we refresh the debtor object to get the latest state from the DB.
-    db.refresh(debtor) # Refresh debtor to get updated conversation_history
-
-    # Ensure conversation_history is treated as a list, as it's a JSON column
-    updated_history: List[Dict[str, Any]] = cast(List[Dict[str, Any]], debtor.conversation_history) if debtor.conversation_history is not None else []
-    response_text = "Lo siento, no pude generar una respuesta en este momento." # Default fallback
-
-    if updated_history and isinstance(updated_history, list):
-        last_message = updated_history[-1]
-        if last_message and 'role' in last_message and last_message['role'] == 'assistant' and 'content' in last_message:
-            response_text = last_message['content']
-
-    # Respondemos por WhatsApp
+    # Responder rápido a Twilio para evitar timeouts
     twilio_response = MessagingResponse()
-    twilio_response.message(response_text)
+    twilio_response.message("Gracias, procesaremos tu mensaje.")
     return Response(content=str(twilio_response), media_type="application/xml")
 
 

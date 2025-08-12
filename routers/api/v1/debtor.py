@@ -11,15 +11,20 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 from schemas.debtor import DebtorCreate, DebtorRead
+from services.cache_service import RedisCache
+from core.metrics import cache_hit_counter, cache_miss_counter
+import json
+import asyncio
+from tasks.ia_tasks import analyze_debtors, save_conversation
 
-router = APIRouter()
-
+router = APIRouter(prefix="/debtor")
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
 
 
 
@@ -30,29 +35,45 @@ def create_debtor(debtor: DebtorCreate, db: Session = Depends(get_db), current_u
         raise HTTPException(status_code=400, detail="Dataset not found or not owned by user")
 
     db_debtor = Debtor(
-    phone=debtor.phone,
-    state=debtor.state,
-    debtor_dataset_id=debtor.debtor_dataset_id,
-    custom_data=debtor.custom_data,
-    user_id=current_user.id,
+        phone=debtor.phone,
+        state=debtor.state,
+        debtor_dataset_id=debtor.debtor_dataset_id,
+        custom_data=debtor.custom_data,
+        user_id=current_user.id,
     )
     db.add(db_debtor)
     db.commit()
     db.refresh(db_debtor)
-    return db_debtor
+    return DebtorRead.model_validate(db_debtor, from_attributes=True)
 
 @router.get("/", response_model=List[DebtorRead])
-def list_debtors(
+def get_debtors_by_dataset(dataset_id: int = Query(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    dataset = db.query(DebtorDataset).filter(DebtorDataset.id == dataset_id, DebtorDataset.user_id == current_user.id).first()
+    if not dataset:
+        raise HTTPException(status_code=400, detail="Dataset not found or not owned by user")
+    debtors = db.query(Debtor).filter(Debtor.debtor_dataset_id == dataset_id, Debtor.user_id == current_user.id).all()
+    return [DebtorRead.model_validate(d, from_attributes=True) for d in debtors]
+
+@router.get("/debtors", response_model=List[DebtorRead])
+async def get_debtors(
     dataset_id: int = Query(...),
     search: Optional[str] = Query(None),
     state: Optional[str] = Query(None),
     min_amount: Optional[float] = Query(None),
     max_amount: Optional[float] = Query(None),
     sort_by: Optional[str] = Query(None),
-    sort_direction: Optional[str] = Query(None, regex="^(asc|desc)$"),
+    sort_direction: Optional[str] = Query(None, pattern="^(asc|desc)$"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    cache = await RedisCache.get_instance()
+    cache_key = f"debtors:{dataset_id}:{search}:{state}:{min_amount}:{max_amount}:{sort_by}:{sort_direction}"
+    cached = await cache.get(cache_key)
+    if cached:
+        cache_hit_counter.inc()
+        return [DebtorRead.model_validate(obj, from_attributes=True) for obj in json.loads(cached)]
+    cache_miss_counter.inc()
+
     dataset = db.query(DebtorDataset).filter(DebtorDataset.id == dataset_id, DebtorDataset.user_id == current_user.id).first()
     if not dataset:
         raise HTTPException(status_code=400, detail="Dataset not found or not owned by user")
@@ -123,10 +144,12 @@ def list_debtors(
         query = query.order_by(Debtor.id) # Or Debtor.phone for a more user-friendly default
 
     debtors = query.all()
-    return debtors
+    result_pydantic = [DebtorRead.model_validate(d, from_attributes=True) for d in debtors]
+    await cache.set(cache_key, json.dumps([d.model_dump() for d in result_pydantic]), ttl=300)
+    return result_pydantic
 
 @router.delete("/{id}", status_code=204)
-def delete_debtor(id: int, dataset_id: int = Query(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def delete_debtor(id: int, dataset_id: int = Query(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     # First, verify the dataset belongs to the user
     dataset = db.query(DebtorDataset).filter(DebtorDataset.id == dataset_id, DebtorDataset.user_id == current_user.id).first()
     if not dataset:
@@ -142,10 +165,12 @@ def delete_debtor(id: int, dataset_id: int = Query(...), db: Session = Depends(g
         raise HTTPException(status_code=404, detail="Debtor not found in this dataset or not owned by user")
     db.delete(db_debtor)
     db.commit()
+    cache = await RedisCache.get_instance()
+    await cache.invalidate_pattern("debtors:*")
     return
 
 @router.put("/{id}", response_model=DebtorRead)
-def update_debtor(id: int, debtor: DebtorCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def update_debtor(id: int, debtor: DebtorCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     # First, verify the dataset belongs to the user
     dataset = db.query(DebtorDataset).filter(DebtorDataset.id == debtor.debtor_dataset_id, DebtorDataset.user_id == current_user.id).first()
     if not dataset:
@@ -169,4 +194,26 @@ def update_debtor(id: int, debtor: DebtorCreate, db: Session = Depends(get_db), 
 
     db.commit()
     db.refresh(db_debtor)
-    return db_debtor
+    cache = await RedisCache.get_instance()
+    await cache.invalidate_pattern("debtors:*")
+    return DebtorRead.model_validate(db_debtor, from_attributes=True)
+
+@router.post("/debtors/analyze")
+async def analyze_debtors_endpoint(debtors: list, dataset_id: int = Query(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # First, verify the dataset belongs to the user
+    dataset = db.query(DebtorDataset).filter(DebtorDataset.id == dataset_id, DebtorDataset.user_id == current_user.id).first()
+    if not dataset:
+        raise HTTPException(status_code=400, detail="Dataset not found or not owned by user")
+
+    task = analyze_debtors.delay(debtors)
+    return {"task_id": task.id, "status": "processing"}
+
+@router.post("/debtors/conversation")
+async def save_conversation_endpoint(conversation: dict, dataset_id: int = Query(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # First, verify the dataset belongs to the user
+    dataset = db.query(DebtorDataset).filter(DebtorDataset.id == dataset_id, DebtorDataset.user_id == current_user.id).first()
+    if not dataset:
+        raise HTTPException(status_code=400, detail="Dataset not found or not owned by user")
+
+    task = save_conversation.delay(conversation)
+    return {"task_id": task.id, "status": "processing"}
