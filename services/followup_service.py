@@ -50,7 +50,7 @@ def run_daily_followups(db: Session):
         }
         # days_to_add = get_frecuencia_from_rules(rules, debtor_data)
         days_to_add = 0 # TODO: Implement this when the rule matcher is implemented # TODO: Implement this when the rule matcher is implemented                         
-        # days_to_add = get_frecuencia_from_rules(rules, debtor_data)        # TODO: Implement this when the rule matcher is implemented      
+        # days_to_add = get_frecuencia_from_rules(rules, debtor_data)           
 
         if days_to_add > 0:
             next_contact_date = today + timedelta(days=days_to_add)
