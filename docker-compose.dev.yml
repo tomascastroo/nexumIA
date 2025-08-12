@@ -1,0 +1,29 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: .
+    container_name: nexum-api-dev
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"  # API FastAPI
+    depends_on:
+      - redis
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+    # Acceso a logs y hot reload
+
+  redis:
+    image: redis:7
+    container_name: nexum-redis-dev
+    ports:
+      - "6379:6379"  # Redis
+    # Sin persistencia en dev
+
+# Cómo ejecutar:
+# docker-compose -f docker-compose.dev.yml up --build
+# Acceso API: http://localhost:8000
+# Acceso Redis: localhost:6379
