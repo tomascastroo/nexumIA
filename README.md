@@ -68,19 +68,40 @@ chmod +x verify.sh
 ```
 Hace: búsqueda de secretos, black/isort/flake8/mypy (si instalados), compila Python, corre tests, valida .gitignore.
 
-## 🔐 Variables de Entorno (ejemplo)
-```env
-SECRET_KEY=...
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/nexum
-REDIS_URL=redis://localhost:6379/0
-OPENAI_API_KEY=sk-...
-TWILIO_ACCOUNT_SID=...
-TWILIO_AUTH_TOKEN=...
-TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
-RATE_LIMIT_MAX=100
-RATE_LIMIT_WINDOW=3600
-DISABLE_RATE_LIMITER=false
+## 🛡️ Pre-commit hooks
+
+Para asegurar calidad y seguridad automática antes de cada commit:
+
+```bash
+pip install pre-commit
+pre-commit install
+# Para correr manualmente en todos los archivos:
+pre-commit run --all-files
 ```
+
+Incluye: ruff, isort, black, bandit, end-of-file-fixer.
+
+## 🔑 Tabla de variables de entorno
+
+| Variable                  | Descripción                        | Ejemplo/Valor dummy                  |
+|---------------------------|------------------------------------|--------------------------------------|
+| SECRET_KEY                | Clave secreta JWT                  | CHANGE_ME                            |
+| JWT_ALG                   | Algoritmo JWT                      | HS256                                |
+| ACCESS_TOKEN_EXPIRE_MINUTES | Expiración token (min)           | 60                                   |
+| API_RATE_LIMIT            | Límite de requests                 | 100                                  |
+| API_RATE_LIMIT_WINDOW     | Ventana de rate limit (seg)        | 60                                   |
+| ALLOWED_ORIGINS           | Orígenes permitidos CORS           | https://app.midominio.com            |
+| REDIS_URL                 | URL de Redis                       | redis://redis:6379/0                 |
+| REDIS_HOST                | Host Redis                         | redis                                |
+| REDIS_PORT                | Puerto Redis                       | 6379                                 |
+| REDIS_DB                  | DB Redis                           | 0                                    |
+| LOG_LEVEL                 | Nivel de log                       | INFO                                 |
+| APP_ENV                   | Entorno app                        | development                          |
+| DATABASE_URL              | URL base de datos                  | postgresql://postgres:postgres@localhost:5432/nexum |
+| OPENAI_API_KEY            | API key OpenAI (dummy en dev)      | dummy                                |
+| TWILIO_ACCOUNT_SID        | SID Twilio (dummy en dev)          | dummy                                |
+| TWILIO_AUTH_TOKEN         | Token Twilio (dummy en dev)        | dummy                                |
+| TWILIO_WHATSAPP_NUMBER    | WhatsApp sender (dummy en dev)     | whatsapp:+14155238886                |
 
 ## 🧭 Frontend (React CRA)
 - Autenticación: `authFetch` añade `Authorization` y maneja 401 / expiración

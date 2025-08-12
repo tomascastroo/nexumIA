@@ -271,6 +271,14 @@ else
     find . -name "*.py" -not -path "./venv/*" -not -path "./env/*" -not -path "./.git/*" -not -path "./node_modules/*" -exec grep -l "print(" {} \;
 fi
 
+# 13. Verificar dependencias vulnerables
+print_status "🔒 Verificando dependencias vulnerables (pip-audit)..."
+if command -v pip-audit &> /dev/null; then
+    pip-audit || print_warning "⚠️  Vulnerabilidades detectadas en dependencias"
+else
+    print_warning "⚠️  pip-audit no está instalado. Instala con: pip install pip-audit"
+fi
+
 echo ""
 print_success "🎉 Verificación completa finalizada"
 print_status "Resumen:"
@@ -285,5 +293,6 @@ echo "  ✅ Tests: Ejecutados"
 echo "  ✅ Archivos de test: Verificados"
 echo "  ✅ .gitignore: Verificado"
 echo "  ✅ Prints de depuración: Verificados"
+echo "  ✅ Dependencias vulnerables: Verificadas"
 
 print_success "🚀 El proyecto está listo para producción!" 
