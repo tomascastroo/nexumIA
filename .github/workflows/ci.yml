@@ -10,6 +10,11 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.10, 3.11, 3.12]
+
     services:
       postgres:
         image: postgres:15
@@ -20,9 +25,9 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U postgres" 
-          --health-interval=10s 
-          --health-timeout=5s 
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
           --health-retries=5
 
       redis:
@@ -30,13 +35,12 @@ jobs:
         ports:
           - 6379:6379
         options: >-
-          --health-cmd "redis-cli ping" 
-          --health-interval 10s 
-          --health-timeout 5s 
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
           --health-retries 5
 
     env:
-      # App
       APP_ENV: test
       ENVIRONMENT: test
       SECRET_KEY: dummy_secret_key_change_me
@@ -44,14 +48,10 @@ jobs:
       ACCESS_TOKEN_EXPIRE_MINUTES: 60
       ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000
       ENABLE_METRICS: "true"
-
-      # Providers
       OPENAI_API_KEY: dummy
       TWILIO_ACCOUNT_SID: dummy
       TWILIO_AUTH_TOKEN: dummy
       TWILIO_WHATSAPP_NUMBER: whatsapp:+14155238886
-
-      # DB/Cache
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nexum
       REDIS_URL: redis://localhost:6379/0
 
@@ -62,7 +62,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.101'
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
@@ -95,4 +95,3 @@ jobs:
       - name: Run tests
         run: |
           pytest -q --maxfail=1 --disable-warnings
-
