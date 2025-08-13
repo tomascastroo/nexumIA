@@ -4,7 +4,7 @@ import os
 import sys
 import pytest
 # Importar db y modelos para registrar metadata
-from db.db import Base, engine
+from db.db import Base, engine  # noqa: F401
 # Importar explícitamente todos los modelos para registrar relaciones antes de create_all
 import models  # noqa: F401
 from models.User import User  # noqa: F401
@@ -28,7 +28,7 @@ if not os.getenv("ENCRYPTION_KEY"):
     os.environ["ENCRYPTION_KEY"] = base64.urlsafe_b64encode(b"0" * 32).decode()
 
 # Asegurar que el root del proyecto esté en sys.path para imports como `db.db`
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
