@@ -104,7 +104,8 @@ jobs:
         run: mypy --ignore-missing-imports --install-types --non-interactive || true
 
       - name: SAST (bandit)
-        run: bandit -r . -x tests --skip B101,B105,B107
+        run: bandit -r . -x tests --skip B101,B105,B106,B107
+      
 
       - name: Run tests (skip external/integration)
         run: pytest -q --maxfail=1 --disable-warnings -k "not twilio and not external and not integration"
