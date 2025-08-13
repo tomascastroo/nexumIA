@@ -52,7 +52,7 @@ def test_env(monkeypatch):
         if not test_user:
             test_user = User(
                 email="test@example.com",
-                hashed_password="test_hashed_password",
+                hashed_password="test_hashed_password",  # nosec B106
                 role="admin"
             )
             session.add(test_user)
