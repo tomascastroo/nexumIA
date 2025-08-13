@@ -58,7 +58,7 @@ def generate_rate_limit_key(ip: str, endpoint: str) -> str:
     """Genera clave única para rate limiting."""
     window_start = int(time.time() // RATE_LIMIT_WINDOW) * RATE_LIMIT_WINDOW
     key_data = f"{ip}:{endpoint}:{window_start}"
-    return f"rate_limit:{hashlib.md5(key_data.encode()).hexdigest()}"
+    return f"rate_limit:{hashlib.sha256(key_data.encode()).hexdigest()}"
 
 async def rate_limit_middleware(request: Request, call_next):
     """

@@ -2,6 +2,7 @@ import re
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
 from dataclasses import dataclass
+import ast
 
 @dataclass
 class EvaluationContext:
@@ -51,7 +52,8 @@ class ConditionEvaluator:
             local_vars = self._create_evaluation_vars(context)
             
             # Evaluar la condición
-            result = eval(condition, {"__builtins__": {}}, local_vars)
+            parsed = ast.parse(condition, mode='eval')
+            result = eval(compile(parsed, filename="<ast>", mode="eval"), {}, local_vars)
             
             return bool(result)
         except Exception as e:

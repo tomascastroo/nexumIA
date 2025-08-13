@@ -4,6 +4,8 @@ import sys
 import json
 from typing import Optional
 
+import uvicorn
+
 class JsonFormatter(logging.Formatter):
     def format(self, record):
         log_record = {
@@ -37,7 +39,6 @@ class UvicornJsonFormatter(JsonFormatter):
 
 # Para FastAPI/Uvicorn: hook para usar este logger
 try:
-    import uvicorn
     uvicorn.config.LOGGING_CONFIG["formatters"]["default"]["()"] = UvicornJsonFormatter
-except Exception:
-    pass
+except Exception as e:
+    print(f"Error configurando logging: {e}")
