@@ -3,6 +3,20 @@ import base64
 import os
 import sys
 import pytest
+# Importar db y modelos para registrar metadata
+from db.db import Base, engine
+# Importar explícitamente todos los modelos para registrar relaciones antes de create_all
+import models  # noqa: F401
+from models.User import User
+from models.Debtor import Debtor
+from models.Campaign import Campaign
+from models.Strategy import Strategy
+from models.DebtorDataset import DebtorDataset
+from models.DebtorCustomField import DebtorCustomField
+from models.DebtPayment import DebtPayment
+from models.Bot import Bot
+
+
 
 # Configuración temprana de entorno para que los módulos de app usen SQLite en tests
 os.environ.setdefault("SECRET_KEY", "test_secret_key")
@@ -32,11 +46,7 @@ def test_env(monkeypatch):
     key = os.getenv("ENCRYPTION_KEY") or base64.urlsafe_b64encode(b"0" * 32).decode()
     monkeypatch.setenv("ENCRYPTION_KEY", key)
     
-    # Importar db y modelos para registrar metadata
-    from db.db import Base, engine
-    # Importar explícitamente todos los modelos para registrar relaciones antes de create_all
-    import models  # noqa: F401
-    from models import User, Debtor, Campaign, Strategy, DebtorDataset, DebtorCustomField, DebtPayment, Bot  # noqa: F401
+
     
     # Crear todas las tablas (idempotente)
     Base.metadata.create_all(bind=engine)
