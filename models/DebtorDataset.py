@@ -4,10 +4,6 @@ from datetime import datetime
 from db.db import Base
 
 # Importá explícitamente las clases relacionadas para que existan en el momento
-from models.DebtorCustomField import DebtorCustomField
-from models.Debtor import Debtor
-from models.User import User
-from models.Campaign import Campaign
 
 class DebtorDataset(Base):
     __tablename__ = "debtor_datasets"

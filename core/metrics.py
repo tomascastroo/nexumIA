@@ -1,8 +1,6 @@
 import os
-import time
-from typing import Dict, Any, Optional
-from prometheus_client import Counter, Histogram, Gauge, Summary, generate_latest, CONTENT_TYPE_LATEST
-from fastapi import Request, Response, APIRouter
+from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
+from fastapi import Response, APIRouter
 from dotenv import load_dotenv
 
 load_dotenv()

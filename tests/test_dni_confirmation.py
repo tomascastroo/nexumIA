@@ -3,10 +3,8 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import services.openai_service as oai
-import services.debtor_service
-import json
 
 @pytest.fixture
 def mock_openai_responses():
@@ -80,8 +78,8 @@ def test_dni_confirmation(mock_openai_responses):
     context_analysis = oai.analyze_conversation_context(conversation_history, "45580095")
     
     # Verificar que detecta confirmación de identidad
-    assert context_analysis["has_identity_confirmation"] == True, "Debe detectar confirmación de identidad"
-    assert context_analysis["is_cooperative"] == True, "Debe ser cooperativo al confirmar identidad"
+    assert context_analysis["has_identity_confirmation"], "Debe detectar confirmación de identidad"
+    assert context_analysis["is_cooperative"], "Debe ser cooperativo al confirmar identidad"
     assert "confirmación_identidad" in context_analysis["context_indicators"], "Debe marcar confirmación de identidad"
     
     # Clasificar el estado (usando mock)
@@ -101,7 +99,7 @@ def test_state_protection_with_dni():
     """Test que verifica la protección de estado cuando se proporciona DNI"""
     
     # Simular deudor en estado VERDE
-    current_state = "VERDE"
+    # current_state = "VERDE"
     message = "45580095"
     
     # Verificar que la lógica de protección funciona
@@ -137,8 +135,8 @@ def test_multiple_dni_formats(mock_openai_responses):
         
         if len(dni) >= 7:
             # DNI válido debe detectar confirmación de identidad
-            assert context_analysis["has_identity_confirmation"] == True, f"DNI {dni} debe detectar confirmación"
-            assert context_analysis["is_cooperative"] == True, f"DNI {dni} debe ser cooperativo"
+            assert context_analysis["has_identity_confirmation"], f"DNI {dni} debe detectar confirmación"
+            assert context_analysis["is_cooperative"], f"DNI {dni} debe ser cooperativo"
         else:
             # DNI muy corto no debe detectar
             pass  # No hay validación específica para DNIs cortos en el mock

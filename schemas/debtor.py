@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from schemas.campaign import CampaignReadMinimal  # Solo para type hints
+    pass  # Solo para type hints
 
 class DebtorBase(BaseModel):
     name: str

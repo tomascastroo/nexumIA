@@ -1,20 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, cast, String, Numeric, asc, desc
-from sqlalchemy.sql import func # Import func specifically for database functions
 from dependencies.auth import get_current_user
 from models.User import User
 from models.Debtor import Debtor
 from models.DebtorDataset import DebtorDataset
 from db.db import SessionLocal
-from pydantic import BaseModel
 from typing import List, Optional
 
 from schemas.debtor import DebtorCreate, DebtorRead
 from services.cache_service import RedisCache
 from core.metrics import cache_hit_counter, cache_miss_counter
 import json
-import asyncio
 from tasks.ia_tasks import analyze_debtors, save_conversation
 
 router = APIRouter(prefix="/debtor")

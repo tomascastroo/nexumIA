@@ -1,13 +1,9 @@
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response
-from sqlalchemy.orm import Session
-from twilio.twiml.messaging_response import MessagingResponse
+from fastapi import APIRouter, HTTPException
 import sys
 sys.path.append('.')
 from db.db import SessionLocal
-from routers.bot import get_db
 from services.whatsapp_service import send_whatsapp_message
 from services.openai_service import generate_response_async, get_task_result
-import asyncio
 
 
 router = APIRouter()

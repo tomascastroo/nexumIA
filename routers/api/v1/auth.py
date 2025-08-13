@@ -3,10 +3,8 @@ from sqlalchemy.orm import Session
 from core.security import create_access_token, hash_password, verify_password, ACCESS_TOKEN_EXPIRE_MINUTES
 from db.db import SessionLocal
 from models.User import User
-from schemas.user import UserCreate, UserLogin, UserOut, TokenData, UserResponse, LoginResponse
+from schemas.user import UserCreate, UserLogin, UserOut, UserResponse, LoginResponse
 from datetime import datetime, timedelta
-from pydantic import BaseModel, ConfigDict
-from fastapi_limiter.depends import RateLimiter
 from dependencies.auth import get_current_user, require_roles
 from core.logger import log_security_event
 from core.metrics import record_security_event

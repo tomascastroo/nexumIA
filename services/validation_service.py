@@ -216,7 +216,7 @@ class ValidationService:
     def _detect_field_type(self, field_name: str, value: Any) -> str:
         """Detecta automáticamente el tipo de campo basado en nombre y valor"""
         field_lower = field_name.lower()
-        value_str = str(value).lower()
+        # value_str = str(value).lower()
         
         if any(keyword in field_lower for keyword in ['dni', 'documento', 'cedula']):
             return 'dni'

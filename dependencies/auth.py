@@ -1,8 +1,6 @@
 from datetime import timedelta
-import os
 from fastapi import Depends, HTTPException, status, Cookie
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 
 from core.security import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, decode_token

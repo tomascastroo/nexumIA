@@ -1,5 +1,4 @@
 import sys
-import importlib
 from fastapi.testclient import TestClient
 
 
@@ -12,9 +11,7 @@ def test_register_and_login_and_protected_route(monkeypatch):
     # Reload modules to pick up env
     sys.modules.pop("db.db", None)
     sys.modules.pop("main", None)
-    import db.db as dbmod
     from db.db import Base, engine
-    import models.User  # ensure users table is registered in metadata
     Base.metadata.create_all(bind=engine)
     import main as mainmod
     client = TestClient(mainmod.app)

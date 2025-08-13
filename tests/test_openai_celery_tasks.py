@@ -7,7 +7,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from tasks.openai_tasks import (
     generate_first_message_task,
     generate_response_task,
@@ -21,7 +21,6 @@ from services.openai_service import (
     analyze_conversation_context_async,
     get_task_result
 )
-from openai.types.chat import ChatCompletionMessageParam
 
 
 class TestOpenAICeleryTasks:

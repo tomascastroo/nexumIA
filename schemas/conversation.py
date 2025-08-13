@@ -2,7 +2,7 @@
 # 🔗 Abrir archivo: file://./schemas/conversation.py
 
 from pydantic import BaseModel, ConfigDict
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Optional
 
 class Conversation(BaseModel):
     conversation_id: str

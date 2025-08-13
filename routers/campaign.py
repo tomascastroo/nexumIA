@@ -9,7 +9,6 @@ from services.cache_service import RedisCache
 from core.metrics import cache_hit_counter, cache_miss_counter
 import json
 from typing import List
-from pydantic.json import pydantic_encoder
 from pydantic import TypeAdapter
 
 router = APIRouter()

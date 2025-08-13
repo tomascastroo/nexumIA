@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
 from models.DebtorDataset import DebtorDataset
 from schemas.debtor_dataset import DebtorDatasetCreate, DebtorDatasetUpdate
 

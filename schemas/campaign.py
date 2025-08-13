@@ -1,9 +1,8 @@
-from typing import List, Optional
-from pydantic import BaseModel, ConfigDict, validator
+from typing import Optional
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
 from schemas.bot import BotRead
-from schemas.debtor import DebtorRead
 from schemas.debtor_dataset import DebtorDatasetRead
 from schemas.strategy import Strategy
 

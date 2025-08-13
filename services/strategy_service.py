@@ -3,8 +3,7 @@ Este servicio espera que todas las funciones reciban la sesión de base de datos
 """
 from sqlalchemy.orm import Session
 from models.Strategy import Strategy
-from schemas.campaign import CampaignCreate
-from schemas.strategy import StrategyCreate, StrategyUpdate, StrategyOut
+from schemas.strategy import StrategyCreate, StrategyUpdate
 
 # NOTA: Este servicio devuelve objetos ORM. La conversión a Pydantic debe hacerse en el router usando .model_validate(obj, from_attributes=True)
 def get_strategy(db: Session, strategy_id: int, user_id: int):

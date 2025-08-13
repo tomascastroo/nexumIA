@@ -11,7 +11,7 @@ from models.DebtorDataset import DebtorDataset
 
 from services.whatsapp_service import send_whatsapp_message
 from services.openai_service import generate_first_message_async, get_task_result
-from schemas.campaign import CampaignCreate,CampaignUpdate,CampaignRead
+from schemas.campaign import CampaignCreate,CampaignUpdate
 from fastapi import HTTPException
 import re
 import difflib

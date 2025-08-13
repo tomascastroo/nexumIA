@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 from datetime import date, timedelta, datetime
 from models.Debtor import Debtor
-from models.Strategy import Strategy
 from models.Campaign import Campaign
 from models.DebtorDataset import DebtorDataset
 import structlog
@@ -39,15 +38,15 @@ def run_daily_followups(db: Session):
             logger.debug(f"Skipping debtor {debtor.id}: No active campaign or strategy found.")
             continue
 
-        strategy = active_campaign.strategy
-        rules = strategy.reglas_frecuencia_contacto or []
-        debtor_data = {
-            "edad": debtor.custom_data.get("edad"),
-            "sexo": debtor.custom_data.get("sexo"),
-            "monto_deuda": debtor.custom_data.get("monto_deuda"),
-            "estado": debtor.state,
-            # ...otros campos relevantes
-        }
+        # strategy = active_campaign.strategy
+        # rules = strategy.reglas_frecuencia_contacto or []
+        # debtor_data = {
+        #     "edad": debtor.custom_data.get("edad"),
+        #     "sexo": debtor.custom_data.get("sexo"),
+        #     "monto_deuda": debtor.custom_data.get("monto_deuda"),
+        #     "estado": debtor.state,
+        #     # ...otros campos relevantes
+        # }
         # days_to_add = get_frecuencia_from_rules(rules, debtor_data)
         days_to_add = 0 # TODO: Implement this when the rule matcher is implemented # TODO: Implement this when the rule matcher is implemented                         
         # days_to_add = get_frecuencia_from_rules(rules, debtor_data)           

@@ -1,5 +1,4 @@
 import os
-import pytest
 
 REQUIRED_VARS = [
     'SECRET_KEY',

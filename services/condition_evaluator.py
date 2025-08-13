@@ -1,5 +1,4 @@
 import re
-import json
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
 from dataclasses import dataclass
@@ -128,7 +127,7 @@ class ConditionEvaluator:
             if isinstance(value, str) and value.replace('.', '').replace(',', '').isdigit():
                 return float(value.replace(',', '.'))
             return value
-        except:
+        except Exception:
             return default
     
     def analyze_conversation_context(self, conversation_history: List[Dict[str, str]]) -> Dict[str, Any]:

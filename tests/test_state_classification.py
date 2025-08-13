@@ -8,13 +8,8 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import services.openai_service as oai
-from services.debtor_service import update_state
-from models.Debtor import Debtor
-from sqlalchemy.orm import Session
-from datetime import datetime
-import json
 
 @pytest.fixture
 def mock_openai_responses():
@@ -99,9 +94,9 @@ class TestStateClassification:
         context_analysis = oai.analyze_conversation_context(conversation_history, "Si")
         
         # Verificar que detecta intención de pago
-        assert context_analysis["has_payment_intent"] == True
-        assert context_analysis["has_positive_response"] == True
-        assert context_analysis["is_cooperative"] == True
+        assert context_analysis["has_payment_intent"]
+        assert context_analysis["has_positive_response"]
+        assert context_analysis["is_cooperative"]
         assert "contexto_de_pago" in context_analysis["context_indicators"]
         
         # Clasificar el estado
@@ -130,8 +125,8 @@ class TestStateClassification:
         
         # Verificar que detecta el contexto de pago
         assert "contexto_de_pago" in context_analysis["context_indicators"]
-        assert context_analysis["has_payment_intent"] == True
-        assert context_analysis["has_positive_response"] == True
+        assert context_analysis["has_payment_intent"]
+        assert context_analysis["has_positive_response"]
         
         # Verificar que se llamó el mock
         mock_analyze.assert_called_once_with(conversation_history, "Si")
@@ -151,7 +146,7 @@ class TestStateClassification:
         context_analysis = oai.analyze_conversation_context(conversation_history, "Si")
         
         # Verificar que detecta respuesta positiva
-        assert context_analysis["has_positive_response"] == True
+        assert context_analysis["has_positive_response"]
         
         # Clasificar estado
         state = oai.classify_state("Si", conversation_history)

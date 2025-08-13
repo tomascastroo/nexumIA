@@ -3,7 +3,6 @@ Este servicio espera que todas las funciones reciban la sesión de base de datos
 """
 from sqlalchemy.orm import Session
 from models.Bot import Bot
-from schemas.campaign import CampaignCreate
 from schemas.bot import BotCreate, BotUpdate
 
 

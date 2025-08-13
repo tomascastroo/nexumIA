@@ -4,11 +4,9 @@ Script de prueba para demostrar el nuevo sistema de evaluación de reglas.
 Este script simula el caso de uso descrito en el problema.
 """
 
-import json
 from services.rule_decision_service import rule_decision_service
 from services.structured_prompt_service import structured_prompt_service
 from services.traceability_service import traceability_service
-import pytest
 from core.logging import get_logger
 logger = get_logger(__name__)
 

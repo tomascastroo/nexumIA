@@ -4,8 +4,7 @@ Configurable con RATE_LIMIT_MAX y RATE_LIMIT_WINDOW en segundos.
 """
 import time
 import hashlib
-from typing import Optional
-from fastapi import Request, HTTPException
+from fastapi import Request
 from fastapi.responses import JSONResponse
 import redis
 import os

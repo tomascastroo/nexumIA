@@ -1,8 +1,8 @@
 import os
 import time
 import uuid
-from typing import Dict, List, Optional
-from fastapi import Request, HTTPException, status
+from typing import Dict, List
+from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware

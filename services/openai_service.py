@@ -1,11 +1,22 @@
 from openai import OpenAI
 import json
 from typing import List, Dict, Any, Optional, Union
-from openai.types.chat import ChatCompletionMessageParam, ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam, ChatCompletionAssistantMessageParam
+from openai.types.chat import ChatCompletionMessageParam, ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
+from services.cache_service import RedisCache
+from core.metrics import cache_hit_counter, cache_miss_counter
+import hashlib
+from tasks.openai_tasks import celery_app
 import os
 from dotenv import load_dotenv
 import structlog
+# Importar tareas Celery para OpenAI
+from tasks.openai_tasks import (
+    generate_first_message_task,
+    generate_response_task, 
+    classify_state_task,
+    analyze_conversation_context_task
+)
 
 logger = structlog.get_logger()
 
@@ -15,19 +26,7 @@ openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 VALID_STATES = {"VERDE", "AMARILLO", "ROJO", "GRIS"}
 
-# Importar tareas Celery para OpenAI
-from tasks.openai_tasks import (
-    generate_first_message_task,
-    generate_response_task, 
-    classify_state_task,
-    analyze_conversation_context_task
-)
 
-from services.cache_service import RedisCache
-from core.metrics import cache_hit_counter, cache_miss_counter
-import json
-import hashlib
-import asyncio
 
 async def get_cached_ia_response(prompt, params):
     cache = await RedisCache.get_instance()
@@ -409,7 +408,6 @@ def get_task_result(task_id: str, timeout: int = 30) -> Union[str, Dict[str, Any
         cuando se necesita el resultado inmediatamente en el hilo principal
     """
     try:
-        from tasks.openai_tasks import celery_app
         task = celery_app.AsyncResult(task_id)
         return task.get(timeout=timeout)
     except Exception as e:

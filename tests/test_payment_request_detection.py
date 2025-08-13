@@ -65,9 +65,9 @@ def test_payment_request_detection():
         print(f"   Esperado: {expected}")
         
         if detected == expected:
-            print(f"   ✅ CORRECTO")
+            print("   ✅ CORRECTO")
         else:
-            print(f"   ❌ INCORRECTO")
+            print("   ❌ INCORRECTO")
         
         print()
     
@@ -102,7 +102,7 @@ def test_full_payment_flow():
     print(f"📊 Datos: {data}")
     
     # Debe poder generar el link
-    assert should_generate == True, f"Debe generar link. Razón: {reason}"
+    assert should_generate, f"Debe generar link. Razón: {reason}"
     assert reason != "IDENTITY_NOT_VALIDATED", "No debe rechazar por identidad no validada"
     assert reason != "NO_PAYMENT_LINK_REQUESTED", "No debe rechazar por falta de solicitud"
     
@@ -145,9 +145,9 @@ def test_payment_with_dni_confirmation():
     print(f"📊 Razón: {reason}")
     
     # Todas las verificaciones deben pasar
-    assert identity_validated == True, "Debe detectar identidad con DNI"
-    assert payment_requested == True, "Debe detectar solicitud de pago"
-    assert should_generate == True, f"Debe generar link. Razón: {reason}"
+    assert identity_validated, "Debe detectar identidad con DNI"
+    assert payment_requested, "Debe detectar solicitud de pago"
+    assert should_generate, f"Debe generar link. Razón: {reason}"
     
     print("✅ Test exitoso: Caso problemático resuelto")
     return True

@@ -1,10 +1,5 @@
 from typing import Dict, Any, List, Optional, Tuple
-from sqlalchemy.orm import Session
-from models.Debtor import Debtor
-from models.DebtPayment import DebtPayment
 from datetime import datetime, timedelta
-import requests
-import json
 
 class PaymentLinkService:
     """Servicio para manejar la generación de links de pago según reglas de cobranza"""

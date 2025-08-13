@@ -26,7 +26,7 @@ def test_identity_validation_with_dni():
     print(f"📊 Identidad validada: {identity_validated}")
     
     # Debe detectar la identidad
-    assert identity_validated == True, "Debe detectar identidad cuando se proporciona DNI"
+    assert identity_validated, "Debe detectar identidad cuando se proporciona DNI"
     
     # Verificar que puede generar link de pago
     should_generate, reason, data = payment_service.should_generate_payment_link(
@@ -40,7 +40,7 @@ def test_identity_validation_with_dni():
     print(f"📊 Razón: {reason}")
     
     # Debe poder generar el link
-    assert should_generate == True, f"Debe generar link cuando identidad está validada. Razón: {reason}"
+    assert should_generate, f"Debe generar link cuando identidad está validada. Razón: {reason}"
     assert reason != "IDENTITY_NOT_VALIDATED", "No debe rechazar por identidad no validada"
     
     print("✅ Test exitoso: Payment link service detecta identidad correctamente")
@@ -72,7 +72,7 @@ def test_different_dni_formats():
         
         if len(dni) >= 7:
             # DNI válido debe detectar identidad
-            assert identity_validated == True, f"DNI {dni} debe detectar identidad"
+            assert identity_validated, f"DNI {dni} debe detectar identidad"
             print(f"✅ DNI {dni}: Identidad detectada")
         else:
             # DNI muy corto no debe detectar
@@ -104,7 +104,7 @@ def test_identity_with_phrases():
         identity_validated = payment_service._check_identity_in_conversation(conversation_history)
         
         # Debe detectar identidad en todas las frases
-        assert identity_validated == True, f"Frase '{phrase}' debe detectar identidad"
+        assert identity_validated, f"Frase '{phrase}' debe detectar identidad"
         print(f"✅ Frase: '{phrase}' - Identidad detectada")
     
     return True

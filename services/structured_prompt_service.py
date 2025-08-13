@@ -1,4 +1,4 @@
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from services.rule_decision_service import rule_decision_service, RuleDecision
 from models.Strategy import Strategy
 

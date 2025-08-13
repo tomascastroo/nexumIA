@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import Optional, List, Dict, Any
+from typing import Optional
 from dependencies.auth import get_current_user
 from db.db import SessionLocal
 from services.traceability_service import traceability_service

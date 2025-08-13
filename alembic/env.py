@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from db.db import Base  # o donde sea que tengas tu Base declarada
-from models import *    # Importá tus modelos para que Alembic los detecte
+from models import *  # noqa: F403
 
 from alembic import context
 

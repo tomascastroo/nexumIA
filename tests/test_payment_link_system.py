@@ -8,8 +8,6 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from services.payment_link_service import payment_link_service
-from typing import Dict, Any, List
-import pytest
 from core.logging import get_logger
 logger = get_logger(__name__)
 
@@ -189,7 +187,7 @@ def test_integration_scenario():
             decision_data=data
         )
         
-        logger.info(f"  Respuesta generada:")
+        logger.info("  Respuesta generada:")
         logger.info(f"    {response}")
         
         # 3. Crear link de pago

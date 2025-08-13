@@ -1,7 +1,6 @@
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from services.condition_evaluator import condition_evaluator, EvaluationContext
 from models.Strategy import Strategy
-from schemas.strategy import EvaluableRule
 
 class StructuredPromptGenerator:
     """Generador de prompts estructurados para el sistema de reglas evaluables"""

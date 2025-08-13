@@ -1,4 +1,3 @@
-import pytest
 from services.payment_link_service import payment_link_service
 
 def test_no_link_sin_identidad():

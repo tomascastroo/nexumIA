@@ -3,9 +3,7 @@ import structlog
 from prometheus_client import Counter
 from db.db import SessionLocal
 from services.whatsapp_service import send_whatsapp_message
-from services.openai_service import get_task_result
 from models.Debtor import Debtor
-from schemas.conversation import ConversationUpdate
 import asyncio
 
 logger = structlog.get_logger()

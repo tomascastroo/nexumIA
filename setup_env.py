@@ -3,7 +3,6 @@
 Script para configurar automáticamente las variables de entorno
 """
 
-import os
 import shutil
 from pathlib import Path
 

@@ -1,6 +1,4 @@
-from typing import Any, Dict
 import sys
-from fastapi.testclient import TestClient
 
 
 def test_start_and_continue_conversation(monkeypatch):
@@ -13,7 +11,6 @@ def test_start_and_continue_conversation(monkeypatch):
     sys.modules.pop("db.db", None)
     sys.modules.pop("main", None)
     from db.db import Base, engine, SessionLocal
-    import models.Debtor  # ensure table is registered
     Base.metadata.create_all(bind=engine)
 
     # Crear un debtor dummy

@@ -1,15 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from models.DebtPayment import DebtPayment
 from models.Debtor import Debtor
-from schemas.debt_payment import DebtPaymentIn, DebtPaymentOut, PaymentRequest
+from schemas.debt_payment import DebtPaymentOut, PaymentRequest
 from services.payment_link_service import payment_link_service
-from typing import List, Optional, Dict, Any, cast
+from typing import List, Dict, Any, cast
 from datetime import datetime, timedelta
 
 # Agregar get_db aquí
 from db.db import SessionLocal
-from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import inspect
 from db.db import engine
 
@@ -126,7 +125,7 @@ def check_payment_link_eligibility(
                 conversation_history = json.loads(debtor.conversation_history)
             else:
                 conversation_history = cast(List[Dict[str, str]], debtor.conversation_history)
-        except:
+        except Exception:
             conversation_history = []
     
     # Verificar elegibilidad usando el servicio

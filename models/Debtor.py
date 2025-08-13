@@ -1,6 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, JSON, func, TIMESTAMP
 from sqlalchemy.orm import relationship
-from datetime import datetime
 from db.db import Base
 
 class Debtor(Base):

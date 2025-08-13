@@ -9,7 +9,9 @@ from models.Debtor import Debtor
 from schemas.debtor import DebtorCreate, DebtorUpdate
 from services.openai_service import classify_state_async, get_task_result
 
-class DebtorNotFound(Exception): pass
+class DebtorNotFound(Exception):
+    pass
+
 
 def get_debtor(db: Session, debtor_id: int, user_id: int):
     return db.query(Debtor).filter(Debtor.id == debtor_id, Debtor.user_id == user_id).first()

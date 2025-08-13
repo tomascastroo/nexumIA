@@ -7,9 +7,8 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
-import time
-from unittest.mock import patch, Mock, MagicMock
-from fastapi import FastAPI, Request
+from unittest.mock import patch, Mock
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 # Configurar variables de entorno para tests ANTES de importar el módulo

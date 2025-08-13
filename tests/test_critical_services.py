@@ -1,9 +1,8 @@
 import pytest
-from datetime import datetime, timedelta
-from services.error_handling_service import error_handling_service, ErrorContext, ErrorSeverity
+from services.error_handling_service import error_handling_service
 from services.validation_service import validation_service, ValidationSeverity
 from services.webhook_service import webhook_service, PaymentStatus, WebhookPayload
-from services.security_service import security_service, UserRole, Permission
+from services.security_service import security_service
 from services.state_machine_service import state_machine_service, DebtorState
 
 class TestErrorHandlingService:

@@ -1,9 +1,8 @@
 from typing import List
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from dependencies.auth import get_current_user
 from models.User import User
-import schemas
 from services import bot_service
 from db.db import SessionLocal
 from schemas.bot import BotCreate, BotUpdate, BotRead

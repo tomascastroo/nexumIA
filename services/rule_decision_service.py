@@ -1,7 +1,5 @@
 from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
-from datetime import datetime
-import json
 from services.condition_evaluator import condition_evaluator, EvaluationContext
 from models.Strategy import Strategy
 
@@ -94,7 +92,7 @@ class RuleDecisionService:
         conv_analysis = condition_evaluator.analyze_conversation_context(conversation_history)
         
         # Agregar análisis del mensaje actual
-        message_analysis = self._analyze_user_message(user_message)
+        # message_analysis = self._analyze_user_message(user_message)
         
         return EvaluationContext(
             debtor_data=debtor_data,

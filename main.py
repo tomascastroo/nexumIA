@@ -2,8 +2,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from fastapi import FastAPI, Request
-from fastapi.responses import Response
-from routers import campaign,strategy,bot,test_whatsapp,webhook,traceability
+from routers import campaign,bot,test_whatsapp,webhook,traceability
 from routers import message
 from middleware.security_middleware import setup_cors_middleware, setup_security_middleware
 from middleware.rate_limit import rate_limit_middleware
@@ -13,11 +12,6 @@ from db.db import SessionLocal
 from routers.debt_payment import router as debt_payment_router
 from core.metrics import router as metrics_router
 import time
-from starlette.middleware.base import BaseHTTPMiddleware
-from pydantic.json import pydantic_encoder
-import json
-from pydantic import TypeAdapter
-from pydantic import ConfigDict
 from routers.strategy import router as strategy_router
 from fastapi_limiter import FastAPILimiter
 import redis.asyncio as aioredis
@@ -93,8 +87,8 @@ async def add_process_time_header(request: Request, call_next):
     process_time = time.time() - start_time
     
     # Log de la request
-    request_id = getattr(request.state, 'request_id', 'unknown')
-    user_id = getattr(request.state, 'user_id', None)
+    # request_id = getattr(request.state, 'request_id', 'unknown')
+    # user_id = getattr(request.state, 'user_id', None)
     # log_request( # This line was removed as per the edit hint
     #     request_id=request_id,
     #     method=request.method,
