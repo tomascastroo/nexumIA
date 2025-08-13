@@ -5,8 +5,7 @@ from dotenv import load_dotenv
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from db.db import Base  # o donde sea que tengas tu Base declarada
-from models import *  # noqa: F403
-
+from models import Bot, Campaign, Debtor, DebtorCustomField, DebtorDataset, Strategy, User, DebtPayment
 from alembic import context
 
 # Cargar variables de entorno
