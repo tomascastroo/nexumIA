@@ -7,15 +7,14 @@ import pytest
 from db.db import Base, engine
 # Importar explícitamente todos los modelos para registrar relaciones antes de create_all
 import models  # noqa: F401
-from models.User import User
-from models.Debtor import Debtor
-from models.Campaign import Campaign
-from models.Strategy import Strategy
-from models.DebtorDataset import DebtorDataset
-from models.DebtorCustomField import DebtorCustomField
-from models.DebtPayment import DebtPayment
-from models.Bot import Bot
-
+from models.User import User  # noqa: F401
+from models.Debtor import Debtor  # noqa: F401
+from models.Campaign import Campaign  # noqa: F401
+from models.Strategy import Strategy  # noqa: F401
+from models.DebtorDataset import DebtorDataset  # noqa: F401
+from models.DebtorCustomField import DebtorCustomField  # noqa: F401
+from models.DebtPayment import DebtPayment  # noqa: F401
+from models.Bot import Bot  # noqa: F401
 
 
 # Configuración temprana de entorno para que los módulos de app usen SQLite en tests
